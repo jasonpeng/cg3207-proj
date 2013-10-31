@@ -66,7 +66,7 @@ component Decoder
         MemWrite             : OUT STD_LOGIC;
         --EX
         RegDst               : OUT STD_LOGIC;
-        ALUop                : OUT STD_LOGIC_VECTOR( 1 DOWNTO 0 );
+        ALUop                : OUT STD_LOGIC_VECTOR(2 DOWNTO 0 );
         ALUSrc               : OUT STD_LOGIC;
         --JUMP
         Jump                 : OUT STD_LOGIC;
@@ -318,7 +318,7 @@ signal EXO_BMI_MemBranch     : STD_LOGIC;
 signal EXO_BMI_Overflow      : STD_LOGIC;
 signal EXO_BMI_Zero          : STD_LOGIC;
 signal EXO_BMI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
-signal EXO_IFI_Beq_Addr      : STD_LOGIC_VECTOR(31 downto 0);
+signal EXO_BMI_Beq_Addr      : STD_LOGIC_VECTOR(31 downto 0);
 signal EXO_BMI_Data          : STD_LOGIC_VECTOR(31 downto 0);
 signal EXO_BMI_WriteAddr     : STD_LOGIC_VECTOR( 4 downto 0) ;
 
@@ -338,7 +338,7 @@ signal BMO_MMI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 signal MMO_IFI_PC_Src        : STD_LOGIC;
 signal MMO_BWI_Data          : STD_LOGIC_VECTOR(31 downto 0);
 signal MMO_BWI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
-signal MMO_BWI_Beq_Addr      : STD_LOGIC_VECTOR(31 downto 0);
+signal MMO_IFI_Beq_Addr      : STD_LOGIC_VECTOR(31 downto 0);
 signal MMO_BWI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 
 -- MEM/WB
@@ -363,10 +363,10 @@ IFF: Fetch Port MAP (
         PC_out          => IFO_PC_Addr,
         PC_out_4        => IFO_PC_4_Addr,
 
-        BEQ_PC          => EXO_IFI_Beq_Addr,
+        BEQ_PC          => MMO_IFI_Beq_Addr,
         PCSrc           => MMO_IFI_PC_Src,
-        Jump            => IDO_IFI_PC_Jump,
-        JumpPC          => IDO_IFI_PC_Jump_Addr
+        Jump            => IDO_IFI_Jump,
+        JumpPC          => IDO_IFI_Jump_Addr
     );
 
 -- IF_ID_BUFF
@@ -493,9 +493,9 @@ IE: Execute Port Map (
         MEM_Zero              => EXO_BMI_Zero,
         MEM_ALU_Result        => EXO_BMI_Alu_Result,
 
-        MEM_BEQ_Addr          => EXO_BMI_Mem_Beq_Addr,
-        MEM_Data2             => EXO_BMI_Mem_Data,
-        MEM_REG_WriteAddr     => EXO_BMI_Mem_WriteAddr
+        MEM_BEQ_Addr          => EXO_BMI_Beq_Addr,
+        MEM_Data2             => EXO_BMI_Data,
+        MEM_REG_WriteAddr     => EXO_BMI_WriteAddr
     );
 
 -- EX_MEM_BUFF
@@ -514,7 +514,7 @@ EXMM: EX_MEM_BUFF Port Map (
         IN_MEM_Zero           => EXO_BMI_Zero,
         IN_MEM_ALU_Result     => EXO_BMI_Alu_Result,
 
-        IN_MEM_BEQ_Addr       => EXO_IFI_Beq_Addr,
+        IN_MEM_BEQ_Addr       => EXO_BMI_Beq_Addr,
         IN_MEM_Data2          => EXO_BMI_Data,
         IN_MEM_REG_WriteAddr  => EXO_BMI_WriteAddr,
 
@@ -552,7 +552,7 @@ MM: DataMemory Port Map (
         WB_PCSrc          => MMO_IFI_PC_Src,
         WB_Data           => MMO_BWI_Data,
         WB_ALU_Result     => MMO_BWI_Alu_Result,
-        WB_BEQ_Addr       => MMO_BWI_Beq_Addr,
+        WB_BEQ_Addr       => MMO_IFI_Beq_Addr,
         WB_REG_WriteAddr  => MMO_BWI_Reg_WriteAddr
     );
 
@@ -561,7 +561,7 @@ MMWB: MEM_WB_BUFF Port Map (
         Clk                   => Clk,
         Reset                 => Reset,
 
-        IN_MemToReg           => MMO_MMI_MemToReg,
+        IN_MemToReg           => BMO_MMI_MemToReg,
         IN_DataMemory_Result  => MMO_BWI_Data,
         IN_ALU_Result         => MMO_BWI_Alu_Result,
         IN_REG_WriteAddr      => MMO_BWI_Reg_WriteAddr,
