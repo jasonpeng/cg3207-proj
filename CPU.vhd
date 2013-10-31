@@ -75,6 +75,15 @@ component Decoder
         Branch_Sign_Extended : out std_logic_vector(31 downto 0);
         read_data_1          : out std_logic_vector (31 downto 0);
         read_data_2          : out std_logic_vector (31 downto 0);
+        -- Check Registers
+        Reg_S1               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S2               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S3               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S4               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S5               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S6               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S7               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+        Reg_S8               : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 
         Instr_20to16         : out std_logic_vector(4 downto 0);
         Instr_15to11         : out std_logic_vector (4 downto 0)
@@ -352,6 +361,10 @@ signal WBO_IDI_WriteAddr     : std_logic_vector( 4 downto 0);
 signal WBO_IDI_WriteData     : std_logic_vector(31 downto 0);
 signal WBO_IDI_RegWrite      : std_logic;
 
+-- Debug Register
+TYPE register_file is array (0 to 7) of std_logic_vector (31 downto 0);
+    signal REG_ARR: register_file;
+
 begin
 
 -- IFetch
@@ -410,6 +423,15 @@ ID: Decoder Port MAP (
         Branch_Sign_Extended => IDO_BEI_Branch_Extend,
         read_data_1          => IDO_BEI_Data_1,
         read_data_2          => IDO_BEI_Data_2,
+
+        Reg_S1               => REG_ARR(0),
+        Reg_S2               => REG_ARR(1),
+        Reg_S3               => REG_ARR(2),
+        Reg_S4               => REG_ARR(3),
+        Reg_S5               => REG_ARR(4),
+        Reg_S6               => REG_ARR(5),
+        Reg_S7               => REG_ARR(6),
+        Reg_S8               => REG_ARR(7),
 
         Instr_20to16         => IDO_BEI_Instr_20_16,
         Instr_15to11         => IDO_BEI_Instr_15_11
