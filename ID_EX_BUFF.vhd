@@ -52,6 +52,7 @@ entity ID_EX_BUFF is
 			  IN_EX_MemToReg : in STD_LOGIC;
 			  IN_EX_MemRead : in STD_LOGIC;
 			  IN_EX_Branch : in STD_LOGIC;
+			  IN_EX_RegWrite : in STD_LOGIC;
 			  
 			  -- OUT --
 	        OUT_EX_ALUOp : out  STD_LOGIC_VECTOR(2 downto 0);
@@ -70,7 +71,8 @@ entity ID_EX_BUFF is
 			  OUT_EX_MemWrite : out STD_LOGIC;
 			  OUT_EX_MemToReg : out STD_LOGIC;
 			  OUT_EX_MemRead : out STD_LOGIC;
-			  OUT_EX_Branch : out STD_LOGIC
+			  OUT_EX_Branch : out STD_LOGIC;
+			  OUT_EX_RegWrite : out STD_LOGIC
 			  );
 end ID_EX_BUFF;
 
@@ -98,6 +100,7 @@ begin
 	  OUT_EX_MemToReg			<=		'0';
 	  OUT_EX_MemRead			<=		'0';
 	  OUT_EX_Branch			<=		'0';
+	  OUT_EX_RegWrite			<=		'0';
 	elsif rising_edge(CLK) then
 	  OUT_EX_ALUOp 			<=		IN_EX_ALUop;
 	  OUT_EX_SignExtended 	<=		IN_EX_SignExtended;
@@ -114,6 +117,7 @@ begin
 	  OUT_EX_MemToReg			<=		IN_EX_MemToReg;
 	  OUT_EX_MemRead			<=		IN_EX_MemRead;
 	  OUT_EX_Branch			<=		IN_EX_Branch;
+	  OUT_EX_RegWrite			<=		IN_EX_RegWrite;
 	end if;
 end process;
 

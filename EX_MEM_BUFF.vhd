@@ -40,7 +40,8 @@ entity EX_MEM_BUFF is
 			  IN_MEM_MemToReg : in STD_LOGIC;
 			  IN_MEM_MemRead : in STD_LOGIC;
 			  IN_MEM_Branch : in STD_LOGIC;
-           
+           IN_MEM_RegWrite : in STD_LOGIC;
+						  
 			  -- alu related
 			  IN_MEM_OVF : in STD_LOGIC;
            IN_MEM_Zero : in STD_LOGIC;
@@ -54,6 +55,7 @@ entity EX_MEM_BUFF is
 			  OUT_MEM_MemToReg : out STD_LOGIC;
 			  OUT_MEM_MemRead : out STD_LOGIC;
 			  OUT_MEM_Branch : out STD_LOGIC;
+			  OUT_MEM_RegWrite : out STD_LOGIC;
 			  
 			  -- alu related
 			  OUT_MEM_OVF : out STD_LOGIC;
@@ -79,6 +81,7 @@ begin
 	  OUT_MEM_MemToReg	<=		'0';
 	  OUT_MEM_MemRead		<=		'0';
 	  OUT_MEM_Branch		<=		'0';
+	  OUT_MEM_RegWrite	<= 	'0';
 	  
 	  OUT_MEM_OVF 			<=		'0';
 	  OUT_MEM_Zero			<=		'0';
@@ -92,6 +95,7 @@ begin
 	  OUT_MEM_MemToReg	<=		IN_MEM_MemToReg;
 	  OUT_MEM_MemRead		<=		IN_MEM_MemRead;
 	  OUT_MEM_Branch		<=		IN_MEM_Branch;
+     OUT_MEM_RegWrite	<=		IN_MEM_RegWrite;
 	  
 	  OUT_MEM_OVF 			<=		IN_MEM_OVF;
 	  OUT_MEM_Zero			<=		IN_MEM_Zero;

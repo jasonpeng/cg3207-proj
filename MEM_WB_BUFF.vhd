@@ -26,11 +26,13 @@ entity MEM_WB_BUFF is
       IN_DataMemory_Result  : in  STD_LOGIC_VECTOR(31 downto 0);
       IN_ALU_Result         : in  STD_LOGIC_VECTOR(31 downto 0);
       IN_REG_WriteAddr      : in  STD_LOGIC_VECTOR(4 downto 0);
+		IN_RegWrite : in STD_LOGIC;
       
       OUT_MemToReg          : out  STD_LOGIC;
       OUT_DataMemory_Result : out  STD_LOGIC_VECTOR(31 downto 0);
       OUT_ALU_Result        : out STD_LOGIC_VECTOR(31 downto 0);
       OUT_REG_WriteAddr     : out STD_LOGIC_VECTOR(4 downto 0);
+		OUT_RegWrite : out STD_LOGIC;
 
       Clk, Reset            : in std_logic
    );
@@ -48,11 +50,13 @@ begin
          OUT_DataMemory_Result  <= (others => '0');
          OUT_ALU_Result         <= (others => '0');
          OUT_REG_WriteAddr      <= (others => '0');
+			OUT_RegWrite           <= '0';
       else
          OUT_MemToReg           <= IN_MemToReg;
          OUT_DataMemory_Result  <= IN_DataMemory_Result;
          OUT_ALU_Result         <= IN_ALU_Result;
          OUT_REG_WriteAddr      <= IN_REG_WriteAddr;
+			OUT_RegWrite           <= IN_RegWrite;
       end if;
    end if;
 end process;

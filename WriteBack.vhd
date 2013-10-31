@@ -27,8 +27,7 @@ entity WriteBack is
       IN_MemToReg          : in  STD_LOGIC;
       IN_Reg_WriteAddr     : in  STD_LOGIC_VECTOR(4 downto 0);
       OUT_Reg_WriteAddr    : out STD_LOGIC_VECTOR(4 downto 0);
-      OUT_Reg_Data         : out STD_LOGIC_VECTOR(31 downto 0);
-      OUT_Reg_RegWrite     : out STD_LOGIC
+      OUT_Reg_Data         : out STD_LOGIC_VECTOR(31 downto 0)
    );
 end WriteBack;
 
@@ -39,7 +38,6 @@ OUT_Reg_Data <= IN_DataMemory_Result when IN_MemToReg = '1' else
                 IN_ALU_Result;
 
 OUT_Reg_WriteAddr <= IN_Reg_WriteAddr;
-OUT_Reg_RegWrite <= IN_MemToReg;
 
 end Behavioral;
 
