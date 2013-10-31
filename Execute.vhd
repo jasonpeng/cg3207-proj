@@ -111,7 +111,10 @@ begin
 			when others => C := "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
 		end case;
 	elsif (ALUOp = "000") then -- LW, SW
-		C := std_logic_vector(unsigned(A) + unsigned(B));
+		C := std_logic_vector(to_unsigned(
+			to_integer(unsigned(A)) + to_integer(signed(B)),
+			32
+		));
 	elsif (ALUOp = "001") then -- BEQ
 		C := std_logic_vector(unsigned(A) - unsigned(B));
 	elsif (ALUOp = "011") then -- ORI
@@ -142,7 +145,11 @@ begin
 	
 	-- Computer BEQ next PC value
 	shiftLeft2 := SignExtended(31 downto 2) & "00";
-	MEM_BEQ_Addr <= std_logic_vector(unsigned(EX_PC) + unsigned(shiftLeft2));
+	MEM_BEQ_Addr <= 
+		std_logic_vector(to_unsigned(
+			to_integer(unsigned(EX_PC)) + to_integer(signed(shiftLeft2)),
+			32
+		));
 	
 	-- Pass on state registers
 	MEM_MemWrite <= EX_MemWrite;
