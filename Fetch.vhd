@@ -78,7 +78,6 @@ instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
 				Instruction <= (others =>'Z');
 			else
 				PC <= nextPC;
-			
 			end if;
 		end if;
 	end process;
@@ -101,17 +100,12 @@ end ram_instr;
 architecture syn of ram_instr is
     type rom_type is array (0 to 7) of std_logic_vector (31 downto 0);  
 	 -- currently, set 0-6 for test purpose
-    CONSTANT ROM : rom_type := (x"34080064",x"340900c8",x"00000000",x"00000000",x"00000000",x"00000000",x"01285020",x"00000000");
-		-- ori $8,$0, 100
-		--	ori $9,$0, 200
-		--	nop
-		--	nop
-		--	nop
-		--	nop
-		--	add $10,$9,$8
-		-- nop
-
-begin
+    CONSTANT ROM : rom_type := (x"34010001",x"34020002",x"00221827",x"00000000",x"00222020");
+	--ori $1,$0, 1
+	--ori $2,$0, 2
+	--nor $3,$1,$2
+	--nop
+	--add $4,$1,$2
 
  -- currently just 8 instructions, after conversion, the value of ADDR should not bigger than 7
 	 DATA <= ROM(conv_integer(ADDR));
