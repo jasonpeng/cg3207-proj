@@ -144,7 +144,7 @@ begin
 	MEM_REG_WriteAddr <= regWriteAddr;
 	
 	-- Computer BEQ next PC value
-	shiftLeft2 := SignExtended(31 downto 2) & "00";
+	shiftLeft2 := SignExtended(29 downto 0) & "00";
 	MEM_BEQ_Addr <= 
 		std_logic_vector(to_unsigned(
 			to_integer(unsigned(EX_PC)) + to_integer(signed(shiftLeft2)),
