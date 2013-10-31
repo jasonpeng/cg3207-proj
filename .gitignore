@@ -2,6 +2,12 @@
 ## Eclipse
 #################
 
+*.lso
+*.prj
+*.stx
+*.xst
+*.gise
+xst/
 iseconfig/
 _xmsgs/
 *.pydevproject
