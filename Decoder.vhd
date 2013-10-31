@@ -117,8 +117,7 @@ begin
 	read_addr2 <= In_Instr(20 downto 16);
 	imm_value <= In_Instr(15 downto 0);
 	-- Read Register 1 Operation
-	read_data_1 <= register_array(CONV_INTEGER(read_addr1));
-	read_data_2 <= register_array(CONV_INTEGER(read_addr2));
+
 	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
 	JumpPC <= In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
@@ -168,7 +167,10 @@ begin
 				end loop;
 			elsif (RegWrite_in = '1' and write_address /= 0 )then
 				register_array(conv_integer(write_address)) <= Writedata;
-		end if;
+			end if;
+		elsif Clk = '0' then
+			read_data_1 <= register_array(CONV_INTEGER(read_addr1));
+			read_data_2 <= register_array(CONV_INTEGER(read_addr2));
 		end if;
 	end process;
 end Behavioral_Decoder;
