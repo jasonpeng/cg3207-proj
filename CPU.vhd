@@ -10,6 +10,9 @@ entity CPU is
         Result1    : out   std_logic_vector (31 downto 0);
         Result2    : out   std_logic_vector (31 downto 0);
         Debug      : out   std_logic_vector (31 downto 0);
+		  Debug1     : out   std_logic_vector (31 downto 0);
+		  Debug2     : out   std_logic_vector (31 downto 0);
+		  Debug3     : out   std_logic_vector (31 downto 0);
         --
          PC_OUT : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
          Reg_S1 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
@@ -621,5 +624,11 @@ WB: WriteBack Port Map (
         OUT_Reg_WriteAddr    => WBO_IDI_WriteAddr,
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
-
+	
+	Debug <= WBO_IDI_WriteData;
+	Debug1 <= IDO_BEI_Data_1;
+	Debug2 <= IDO_BEI_Data_2;
+	Debug3 <= IDO_BEI_Data_1;
+	Result1 <= EXO_BMI_Alu_Result;
+	Result2 <= X"0000000" & "000" & IDO_BEI_RegWrite;
 end Behavioral;

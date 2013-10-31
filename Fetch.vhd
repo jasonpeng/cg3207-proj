@@ -67,7 +67,7 @@ instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
 				else BEQ_PC when (PCSrc = '1')
 				else incPC;
 		incPC <= PC + X"00000004";			-- incPC = PC +4 ;
-		PC_out <= PC;
+		PC_out <= incPC;
 		read_addr <= "00"&PC(31 downto 2);
 		PC_out_4 <= read_addr;
 	process (Clk,Reset)
@@ -98,15 +98,19 @@ port (
 end ram_instr;
 
 architecture syn of ram_instr is
-    type rom_type is array (0 to 7) of std_logic_vector (31 downto 0);  
+    type rom_type is array (0 to 36) of std_logic_vector (31 downto 0);  
 	 -- currently, set 0-6 for test purpose
-    CONSTANT ROM : rom_type := (x"34010001",x"34020002",x"00221827",x"00000000",x"00222020");
-	--ori $1,$0, 1
-	--ori $2,$0, 2
-	--nor $3,$1,$2
-	--nop
-	--add $4,$1,$2
+    CONSTANT ROM : rom_type := (
+	 x"34010000",
+x"34010001",x"34020002",x"34030004",x"34040008",
+x"00000000",x"00000000",x"00000000",x"00222827",
+x"00000000",x"00223020",x"00000000",x"00643824",
+x"00000000",x"00834022",x"00000000",x"ac050000",
+x"00000000",x"00000000",x"00000000",x"8c080000",
+x"00000000",x"00000000",x"00000000",x"0800001d",x"00000000",x"00000000",x"00000000",x"00000000",
+x"0022402a",x"116cffe3",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
 
+begin
  -- currently just 8 instructions, after conversion, the value of ADDR should not bigger than 7
 	 DATA <= ROM(conv_integer(ADDR));
 end syn;
