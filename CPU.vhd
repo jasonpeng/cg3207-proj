@@ -124,7 +124,7 @@ component ID_EX_BUFF
         IN_EX_MemToReg        : in STD_LOGIC;
         IN_EX_MemRead         : in STD_LOGIC;
         IN_EX_Branch          : in STD_LOGIC;
-
+         IN_EX_RegWrite : in STD_LOGIC;
         -- OUT --
         OUT_EX_ALUOp          : out STD_LOGIC_VECTOR(2 downto 0);
         OUT_EX_SignExtended   : out STD_LOGIC_VECTOR(31 downto 0);
@@ -142,6 +142,7 @@ component ID_EX_BUFF
         OUT_EX_MemWrite       : out STD_LOGIC;
         OUT_EX_MemToReg       : out STD_LOGIC;
         OUT_EX_MemRead        : out STD_LOGIC;
+        OUT_EX_RegWrite : out STD_LOGIC;
         OUT_EX_Branch         : out STD_LOGIC
     );
 end component;
@@ -214,7 +215,8 @@ component EX_MEM_BUFF
         OUT_MEM_MemToReg           : out STD_LOGIC;
         OUT_MEM_MemRead            : out STD_LOGIC;
         OUT_MEM_Branch             : out STD_LOGIC;
-
+         IN_MEM_RegWrite : in STD_LOGIC;
+         OUT_MEM_RegWrite : out STD_LOGIC;
         -- alu related
         OUT_MEM_OVF                : out STD_LOGIC;
         OUT_MEM_Zero               : out STD_LOGIC;
@@ -263,12 +265,12 @@ component MEM_WB_BUFF
         IN_DataMemory_Result  : in  STD_LOGIC_VECTOR(31 downto 0);
         IN_ALU_Result         : in  STD_LOGIC_VECTOR(31 downto 0);
         IN_REG_WriteAddr      : in  STD_LOGIC_VECTOR(4 downto 0);
-
+        IN_RegWrite : in STD_LOGIC;
         OUT_MemToReg          : out  STD_LOGIC;
         OUT_DataMemory_Result : out  STD_LOGIC_VECTOR(31 downto 0);
         OUT_ALU_Result        : out STD_LOGIC_VECTOR(31 downto 0);
         OUT_REG_WriteAddr     : out STD_LOGIC_VECTOR(4 downto 0);
-
+        OUT_RegWrite : out STD_LOGIC;
         Clk, Reset            : in std_logic
    );
 end component;
@@ -328,6 +330,7 @@ signal BEO_EXI_MemWrite      : STD_LOGIC;
 signal BEO_EXI_MemToReg      : STD_LOGIC;
 signal BEO_EXI_MemRead       : STD_LOGIC;
 signal BEO_EXI_MemBranch     : STD_LOGIC;
+signal BEO_BMI_RegWrite      : STD_LOGIC;
 
 -- EX
 signal EXO_BMI_MemWrite      : STD_LOGIC;
@@ -348,6 +351,7 @@ signal BMO_MMI_MemRead       : STD_LOGIC;
 signal BMO_MMI_Branch        : STD_LOGIC;
 signal BMO_MMI_Overflow      : STD_LOGIC;
 signal BMO_MMI_Zero          : STD_LOGIC;
+signal BMO_BWI_RegWrite      : STD_LOGIC;
 signal BMO_MMI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
 signal BMO_MMI_Beq_Addr      : STD_LOGIC_VECTOR(31 downto 0);
 signal BMO_MMI_Data          : STD_LOGIC_VECTOR(31 downto 0);
@@ -365,11 +369,12 @@ signal BWO_WBI_MemToReg      : STD_LOGIC;
 signal BWO_WBI_Data          : STD_LOGIC_VECTOR(31 downto 0);
 signal BWO_WBI_ALU_Result    : STD_LOGIC_VECTOR(31 downto 0);
 signal BWO_WBI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
+signal BWO_IDI_RegWrite      : std_logic;
 
 -- WB
 signal WBO_IDI_WriteAddr     : std_logic_vector( 4 downto 0);
 signal WBO_IDI_WriteData     : std_logic_vector(31 downto 0);
-signal WBO_IDI_RegWrite      : std_logic;
+
 
 -- Debug Register
 --TYPE register_file is array (0 to 7) of std_logic_vector (31 downto 0);
@@ -414,7 +419,7 @@ ID: Decoder Port MAP (
 
         write_address        => WBO_IDI_WriteAddr,
         WriteData            => WBO_IDI_WriteData,
-        RegWrite_in          => WBO_IDI_RegWrite,
+        RegWrite_in          => BWO_IDI_RegWrite,
         -- WB
         RegWrite             => IDO_BEI_RegWrite,
         MemtoReg             => IDO_BEI_MemToReg,
@@ -469,7 +474,7 @@ IDEX: ID_EX_BUFF Port Map (
         IN_EX_MemToReg        => IDO_BEI_MemToReg,
         IN_EX_MemRead         => IDO_BEI_MemRead,
         IN_EX_Branch          => IDO_BEI_Branch,
-
+         IN_EX_RegWrite       => IDO_BEI_RegWrite,
         -- OUT --
         OUT_EX_ALUOp          => BEO_EXI_ALU_Op,
         OUT_EX_ALUSrc         => BEO_EXI_ALU_Src,
@@ -487,6 +492,7 @@ IDEX: ID_EX_BUFF Port Map (
         OUT_EX_MemWrite       => BEO_EXI_MemWrite,
         OUT_EX_MemToReg       => BEO_EXI_MemToReg,
         OUT_EX_MemRead        => BEO_EXI_MemRead,
+        OUT_EX_RegWrite       => BEO_BMI_RegWrite,
         OUT_EX_Branch         => BEO_EXI_MemBranch
     );
 
@@ -549,12 +555,13 @@ EXMM: EX_MEM_BUFF Port Map (
         IN_MEM_BEQ_Addr       => EXO_BMI_Beq_Addr,
         IN_MEM_Data2          => EXO_BMI_Data,
         IN_MEM_REG_WriteAddr  => EXO_BMI_WriteAddr,
-
+        IN_MEM_RegWrite       => BEO_BMI_RegWrite,
         OUT_MEM_MemWrite      => BMO_MMI_MemWrite,
         OUT_MEM_MemToReg      => BMO_MMI_MemToReg,
         OUT_MEM_MemRead       => BMO_MMI_MemRead,
         OUT_MEM_Branch        => BMO_MMI_Branch,
-
+        OUT_MEM_RegWrite      => BMO_BWI_RegWrite,
+        
         -- alu related
         OUT_MEM_OVF           => BMO_MMI_Overflow,
         OUT_MEM_Zero          => BMO_MMI_Zero,
@@ -597,10 +604,12 @@ MMWB: MEM_WB_BUFF Port Map (
         IN_DataMemory_Result  => MMO_BWI_Data,
         IN_ALU_Result         => MMO_BWI_Alu_Result,
         IN_REG_WriteAddr      => MMO_BWI_Reg_WriteAddr,
-
+        IN_RegWrite           => BMO_BWI_RegWrite,
+         
         OUT_MemToReg          => BWO_WBI_MemToReg,
         OUT_DataMemory_Result => BWO_WBI_Data,
         OUT_ALU_Result        => BWO_WBI_Alu_Result,
+        OUT_RegWrite          => BWO_IDI_RegWrite,
         OUT_REG_WriteAddr     => BWO_WBI_Reg_WriteAddr
    );
 
@@ -611,8 +620,7 @@ WB: WriteBack Port Map (
         IN_MemToReg          => BWO_WBI_MemToReg,
         IN_Reg_WriteAddr     => BWO_WBI_Reg_WriteAddr,
         OUT_Reg_WriteAddr    => WBO_IDI_WriteAddr,
-        OUT_Reg_Data         => WBO_IDI_WriteData,
-        OUT_Reg_RegWrite     => WBO_IDI_RegWrite
+        OUT_Reg_Data         => WBO_IDI_WriteData
    );
 
 end Behavioral;
