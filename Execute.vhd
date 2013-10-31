@@ -86,7 +86,7 @@ begin
 	case ALUSrc is 
 		when '0' => B := Data2;
 		when '1' => B := SignExtended;
-		when others => B := "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+		when others => B := (others => 'X');
 	end case;
 	
 	-- ALU --
@@ -117,9 +117,9 @@ begin
 	elsif (ALUOp = "011") then -- ORI
 		C := A OR B;
 	elsif (ALUOp = "100") then -- LUI
-		C := B sll 16;
+		C := std_logic_vector(unsigned(B) sll 16);
 	else
-		C := "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
+		C := (others => 'Z');
 	end if;
 	
 	-- Set MEM_ALU_Result
