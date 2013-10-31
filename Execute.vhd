@@ -74,7 +74,8 @@ architecture Behavioral of Execute is
 
 begin
 	
-process(CLK, RESET)
+process(CLK, Reset, ALUOp, SignExtended, ALUSrc, Data1, Data2, RegDst, Instr_20_16, Instr_15_11,
+	EX_PC, EX_MemWrite, EX_MemRead, EX_MemToReg, EX_Branch)
 	variable A : STD_LOGIC_VECTOR(31 downto 0); -- op1 for ALU
 	variable B : STD_LOGIC_VECTOR(31 downto 0); -- op2 for ALU
 	variable C : STD_LOGIC_VECTOR(31 downto 0); -- result
