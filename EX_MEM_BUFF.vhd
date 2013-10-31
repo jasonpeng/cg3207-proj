@@ -87,13 +87,11 @@ begin
 	  OUT_MEM_BEQ_Addr 	<=		(others => '0');
 	  OUT_MEM_Data2		<=		(others => '0');
 	  OUT_MEM_REG_WriteAddr <=	(others => '0');
-     OUT_MEM_RegDst     <=    (others => '0');
 	elsif rising_edge(CLK) then
 	  OUT_MEM_MemWrite	<=		IN_MEM_MemWrite;
 	  OUT_MEM_MemToReg	<=		IN_MEM_MemToReg;
 	  OUT_MEM_MemRead		<=		IN_MEM_MemRead;
 	  OUT_MEM_Branch		<=		IN_MEM_Branch;
-     OUT_MEM_RegDst     <=    IN_MEM_RegDst;
 	  
 	  OUT_MEM_OVF 			<=		IN_MEM_OVF;
 	  OUT_MEM_Zero			<=		IN_MEM_Zero;
