@@ -10,6 +10,16 @@ entity CPU is
         Result1    : out   std_logic_vector (31 downto 0);
         Result2    : out   std_logic_vector (31 downto 0);
         Debug      : out   std_logic_vector (31 downto 0);
+        --
+         PC_OUT : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S1 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S2 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S3 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S4 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S5 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+         Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
         -- cpu
         Clk, Reset : in    std_logic
     );
@@ -281,7 +291,7 @@ end component;
 -- IF
 signal IFO_Instr        : std_logic_vector(31 downto 0);
 signal IFO_PC_Addr      : std_logic_vector(31 downto 0);
-signal IFO_PC_4_Addr    : std_logic_vector(31 downto 0);
+--signal IFO_PC_4_Addr    : std_logic_vector(31 downto 0);
 
 -- IF/ID
 signal DBO_IDI_Instr    : std_logic_vector(31 downto 0);
@@ -362,8 +372,8 @@ signal WBO_IDI_WriteData     : std_logic_vector(31 downto 0);
 signal WBO_IDI_RegWrite      : std_logic;
 
 -- Debug Register
-TYPE register_file is array (0 to 7) of std_logic_vector (31 downto 0);
-    signal REG_ARR: register_file;
+--TYPE register_file is array (0 to 7) of std_logic_vector (31 downto 0);
+--    signal REG_ARR: register_file;
 
 begin
 
@@ -374,7 +384,7 @@ IFF: Fetch Port MAP (
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-        PC_out_4        => IFO_PC_4_Addr,
+        PC_out_4        => PC_OUT,
 
         BEQ_PC          => MMO_IFI_Beq_Addr,
         PCSrc           => MMO_IFI_PC_Src,
@@ -424,14 +434,14 @@ ID: Decoder Port MAP (
         read_data_1          => IDO_BEI_Data_1,
         read_data_2          => IDO_BEI_Data_2,
 
-        Reg_S1               => REG_ARR(0),
-        Reg_S2               => REG_ARR(1),
-        Reg_S3               => REG_ARR(2),
-        Reg_S4               => REG_ARR(3),
-        Reg_S5               => REG_ARR(4),
-        Reg_S6               => REG_ARR(5),
-        Reg_S7               => REG_ARR(6),
-        Reg_S8               => REG_ARR(7),
+        Reg_S1               => Reg_S1, --REG_ARR(0),
+        Reg_S2               => Reg_S2, --REG_ARR(1),
+        Reg_S3               => Reg_S3, --REG_ARR(2),
+        Reg_S4               => Reg_S4, --REG_ARR(3),
+        Reg_S5               => Reg_S5, --REG_ARR(4),
+        Reg_S6               => Reg_S6, --REG_ARR(5),
+        Reg_S7               => Reg_S7, --REG_ARR(6),
+        Reg_S8               => Reg_S8, --REG_ARR(7),
 
         Instr_20to16         => IDO_BEI_Instr_20_16,
         Instr_15to11         => IDO_BEI_Instr_15_11
