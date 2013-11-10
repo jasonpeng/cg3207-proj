@@ -39,7 +39,10 @@ entity Decoder is
 			  In_Instr : in STD_LOGIC_VECTOR(31 downto 0);
 			 
 			  write_address: in std_logic_vector(4 downto 0);
-			  WriteData : in  STD_LOGIC_VECTOR(31 downto 0);
+			  WriteData1 : in  STD_LOGIC_VECTOR(31 downto 0);
+			  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
+			  
+			  Mul_or_Div: in std_logic;									-- to detect if it is a mul or div;
 			  RegWrite_in  : in std_logic;
 			  			  	  
 			  -- wb
@@ -72,15 +75,15 @@ entity Decoder is
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
 			  
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
-			  Instr_15to11: out std_logic_vector (4 downto 0)
-			  
+			  Instr_15to11: out std_logic_vector (4 downto 0);
+			  Instr_10to6: out std_logic_vector(4 downto 0)
 			  );
 end Decoder;
 
 architecture Behavioral_Decoder of Decoder is
  component Control
 	port(
-		InstrOp: in std_logic_vector(5 downto 0);
+		Instr: in std_logic_vector(31 downto 0);
 		RegDst: out std_logic;
 		ALUSrc:out std_logic;
 		MemtoReg: out std_logic;
@@ -94,8 +97,9 @@ architecture Behavioral_Decoder of Decoder is
  
 --	Registers 
 	TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
-		signal register_array: register_file;
-	
+	signal register_array: register_file;
+	signal register_low: std_logic_vector(31 downto 0);
+	signal register_high: std_logic_vector(31 downto 0);
 	signal read_addr1: std_logic_vector(4 downto 0);
 	signal read_addr2: std_logic_vector(4 downto 0);
 	signal write_addr: std_logic_vector(4 downto 0);
@@ -122,8 +126,20 @@ begin
 
 	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
-	JumpPC <= In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
+	-- JumpPC = rs -- JR,JALR		R type
+	-- JumpPC = calculated address when JUMP is JAL or J	I type
+	JumpPC <= register_array(CONV_INTEGER(In_Instr(25 downto 21))) when (In_Instr(31 downto 26) = "000000" )
+				else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00" ;
+	-- Reg(31) is 
+	register_array(31) <= (In_PC + 4) when (In_Instr(31 downto 26)= "000011");	-- when instrop is JAL, store the jumpPC to register 31
+	register_array(conv_integer(In_Instr(15 downto 11))) <= (In_PC + 4) when (In_Instr(31 downto 26) = "000000" and In_Instr(5 downto 0)  = "001001") 	-- case jalr
+																				else register_low when (In_Instr(31 downto 26) ="000000" and In_Instr(5 downto 0) = "010010")	-- case mvlo
+																				else register_high when (In_Instr(31 downto 26) = "000000" and In_Instr(5 downto 0) = "010000"); -- case mvhi
 	
+	register_low <= writedata1 when (Mul_or_Div = '1')
+						else x"00000000";
+	register_high <= writedata2 when (Mul_or_Div = '1')
+						else x"00000000";
 	Jump <= Jump_out; 
 	RegDst <= RegDst_out; 
 	ALUSrc <= ALUSrc_out; 
@@ -135,7 +151,7 @@ begin
 	ALUOp <= ALUOp_out;
 	Instr_20to16 <= In_Instr(20 downto 16);
 	Instr_15to11 <= In_Instr(15 downto 11);
-
+	Instr_10to6 <= In_Instr(10 downto 6);
 -- check registers;
 	Reg_S1 <= register_array(1); 
 	Reg_S2 <= register_array(2); 
@@ -149,7 +165,7 @@ begin
 	
 	ctrl: control port map
 		(
-				InstrOp => In_Instr(31 downto 26),
+				Instr => In_Instr,
 				RegDst =>RegDst_out,
 				ALUSrc => ALUSrc_out,
 				MemtoReg => MemtoReg_out,
@@ -168,7 +184,7 @@ begin
 					register_array(i) <= CONV_STD_LOGIC_VECTOR('0',32);
 				end loop;
 			elsif (RegWrite_in = '1' and write_address /= 0 )then
-				register_array(conv_integer(write_address)) <= Writedata;
+				register_array(conv_integer(write_address)) <= Writedata1;
 			end if;
 		end if;
 	end process;
