@@ -2,10 +2,20 @@
 ## Eclipse
 #################
 
+*.html
+*.bld
+*.map
+*.mrp
+*.ngc
+*.ngr
 *.lso
 *.prj
 *.stx
 *.xst
+*.ncd
+*.ngm
+*.ngd
+*.pcf
 *.gise
 *.cmd_log
 *.syr
@@ -13,6 +23,8 @@
 *.xml
 xst/
 iseconfig/
+_ngo/
+xlnx_*/
 _xmsgs/
 *.pydevproject
 .project
