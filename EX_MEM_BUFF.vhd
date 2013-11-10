@@ -46,6 +46,8 @@ entity EX_MEM_BUFF is
 			  IN_MEM_OVF : in STD_LOGIC;
            IN_MEM_Zero : in STD_LOGIC;
            IN_MEM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
+			  IN_MEM_ALU_Result_2 : in STD_LOGIC_VECTOR(31 downto 0);
+			  IN_MEM_MUL_DIV : in STD_LOGIC;
 			  
 			  IN_MEM_BEQ_Addr : in STD_LOGIC_VECTOR(31 downto 0); -- computed BEQ address
 			  IN_MEM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for DM Write Data
@@ -61,6 +63,8 @@ entity EX_MEM_BUFF is
 			  OUT_MEM_OVF : out STD_LOGIC;
            OUT_MEM_Zero : out STD_LOGIC;
            OUT_MEM_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
+			  OUT_MEM_ALU_Result_2 : out STD_LOGIC_VECTOR(31 downto 0);
+			  OUT_MEM_MUL_DIV : out STD_LOGIC;
 			  
 			  OUT_MEM_BEQ_Addr : out STD_LOGIC_VECTOR(31 downto 0); -- computed BEQ address
 			  OUT_MEM_Data2 : out STD_LOGIC_VECTOR(31 downto 0); -- for DM Write Data
@@ -86,6 +90,8 @@ begin
 	  OUT_MEM_OVF 			<=		'0';
 	  OUT_MEM_Zero			<=		'0';
 	  OUT_MEM_ALU_Result <=		(others => '0');
+	  OUT_MEM_ALU_Result_2 <=	(others => '0');
+	  OUT_MEM_MUL_DIV		<=		'0';
 	  
 	  OUT_MEM_BEQ_Addr 	<=		(others => '0');
 	  OUT_MEM_Data2		<=		(others => '0');
@@ -100,6 +106,8 @@ begin
 	  OUT_MEM_OVF 			<=		IN_MEM_OVF;
 	  OUT_MEM_Zero			<=		IN_MEM_Zero;
 	  OUT_MEM_ALU_Result <=		IN_MEM_ALU_Result;
+	  OUT_MEM_ALU_Result_2 <=	IN_MEM_ALU_Result_2;
+	  OUT_MEM_MUL_DIV		<=		IN_MEM_MUL_DIV;
 	  
 	  OUT_MEM_BEQ_Addr 	<=		IN_MEM_BEQ_Addr;
 	  OUT_MEM_Data2		<=		IN_MEM_Data2;
