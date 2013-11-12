@@ -40,14 +40,14 @@ entity Decoder is
 			 
 			  write_address: in std_logic_vector(4 downto 0);
 			  WriteData1 : in  STD_LOGIC_VECTOR(31 downto 0);
-			--  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
+			  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
 			  
 			  Mul_or_Div: in std_logic;									-- to detect if it is a mul or div;
 			  RegWrite_in  : in std_logic;
 			  
 			  -- Data Hazzard Detection
 			  ID_EX_MEM_READ: in std_logic;
-			  ID_EX_REG_RT: in std_logic_vector(5 downto 0);		-- ID EX Register RT
+			  ID_EX_REG_RT: in std_logic_vector(4 downto 0);		-- ID EX Register RT
 			  ID_STALL: out std_logic;
 			  -- wb
 			  RegWrite: out std_logic;
@@ -63,7 +63,7 @@ entity Decoder is
 			  Jump : OUT STD_LOGIC; 
            JumpPC : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 			  -- Branch Controls
-			  EX_MEM_REG_RD : in std_logic_vector(5 downto 0);
+			  EX_MEM_REG_RD : in std_logic_vector(4 downto 0);
 			  Branch_Sign_Extended: out std_logic_vector(31 downto 0);
 			  PCSrc : OUT STD_LOGIC; 
 
@@ -78,6 +78,7 @@ entity Decoder is
 				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			   
 			  Instr_25to21: out std_logic_vector(4 downto 0);
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
 			  Instr_15to11: out std_logic_vector (4 downto 0)
@@ -94,7 +95,6 @@ architecture Behavioral_Decoder of Decoder is
 		RegWrite:out std_logic;
 		MemRead:out std_logic;
 		MemWrite:out std_logic;
-		Jump: out std_logic;
 		ALUOp: out std_logic_vector(2 downto 0));
  end component;-- RegWrite internal signal
  
@@ -108,7 +108,6 @@ architecture Behavioral_Decoder of Decoder is
 	alias funct: std_logic_vector(5 downto 0) is In_Instr(5 downto 0);
 	signal register_low: std_logic_vector(31 downto 0);
 	signal register_high: std_logic_vector(31 downto 0);
-	signal write_addr: std_logic_vector(4 downto 0);
 	signal imm_value : std_logic_vector (15 downto 0);
 	
 -- 
@@ -145,11 +144,11 @@ begin
 	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
 												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
 												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
-	
-	--register_low <= writedata1 when (Mul_or_Div = '1')
-		--				else x"00000000";
-	--register_high <= writedata2 when (Mul_or_Div = '1')
-			--			else x"00000000";
+	-- for mul & div cases
+	register_low <= writedata1 when (Mul_or_Div = '1')
+					else x"00000000";
+	register_high <= writedata2 when (Mul_or_Div = '1')
+					else x"00000000";
 	Instr_25to21 <= reg_rs;
 	Instr_20to16 <= reg_rt;
 	Instr_15to11 <= reg_rd;
@@ -162,7 +161,7 @@ begin
 	Reg_S6 <= register_array(6); 
 	Reg_S7 <= register_array(7); 	
 	Reg_S8 <= register_array(8);
-
+   
 -- Data hazzard detection
 	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
 						((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
@@ -202,15 +201,20 @@ begin
 				MemWrite => MemWrite_out,
 				ALUOp => ALUOp_out);
 	
-rf:process (Clk)
+rf:process (Clk,Reset)
 	begin
-		if (Clk'event and Clk = '1') then		
-			if(RegWrite_in = '1' and write_address /= 0 )then
-				register_array(conv_integer(write_address)) <= Writedata1;
+		if(Reset = '1') then
+			for i in 0 to 31 loop
+				register_array(i) <= X"00000000";
+			end loop;
+		elsif (Clk'event and Clk = '1') then		
+			if(RegWrite_in = '1' and (write_address /= 0) )then
+				--register_array(conv_integer(write_address)) <= writedata1;
+				register_array(3) <= x"01010100";
 			end if;
-		elsif(Clk'event and Clk = '0') then
-			read_data_1 <= register_array(CONV_INTEGER(reg_rs));
-			read_data_2 <= register_array(CONV_INTEGER(reg_rt));
+--		elsif(Clk'event and Clk = '0') then
+--			read_data_1 <= register_array(CONV_INTEGER(reg_rs));
+--			read_data_2 <= register_array(CONV_INTEGER(reg_rt));
 		end if;
 	end process;
 	
@@ -225,6 +229,7 @@ pipeline: process (Clk,Reset)
 			  ALUop <="000"; 
            ALUSrc <='0'; 
 		elsif rising_edge (Clk) then
+
 				if (Stall = '0') then
 					RegDst <= RegDst_out; 
 					ALUSrc <= ALUSrc_out; 
@@ -233,6 +238,7 @@ pipeline: process (Clk,Reset)
 					MemRead <= MemRead_out; 
 					MemWrite <= MemWrite_out;
 					ALUOp <= ALUOp_out;
+
 				end if;
 				
 				if (hd_stall = '1') then
