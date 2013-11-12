@@ -38,8 +38,6 @@ entity Control is
 		RegWrite:out std_logic;
 		MemRead:out std_logic;
 		MemWrite:out std_logic;
-		Branch: out std_logic;
-		Jump: out std_logic;
 		ALUOp: out std_logic_vector(2 downto 0));	-- input instruction after fetch
 end Control;
 
@@ -60,28 +58,22 @@ begin
 			RegWrite <= '1' when (InstrOp = "000000" or InstrOp = "100011" 	-- case R format or case LW
 										or InstrOp = "001101" or InstrOp = "001111"	-- case for ori or case LUI
 										or InstrOp = "001010"							 -- case for slti
-										or InstrOp = "001000" or (InstrOp="000001" and Instrbit20 = '1')	 -- case for addi or begzal
-										or InstrOp = "000011" or (InstrOp = "000000" and Funct = "001001")) -- case for jal or jalr
-					 else '0';-- case SW and BEQ
+										or InstrOp = "001000")						 -- case for addi
+							else '0';-- case SW and BEQ
 					 
 			MemRead  <= '1' when (InstrOp = "100011")								-- case for lw
 					 else '0';
 			MemWrite <= '1' when (InstrOp = "101011")								-- case for sw
 					 else '0';		
-			Branch <= '1' when (InstrOp = "000100" or InstrOp ="000001")								-- case for beq,beqz,beqzal
-					 else '0';
-			Jump <= '1' when (InstrOp = "000010" or InstrOp = "000011" or (InstrOp = "000000" and Funct = "001000") or (InstrOp = "000000" and Funct = "001001"))									-- case for jump
-				else '0';																	-- case jump,jr,jarl,jal
+																				-- case jump,jr,jarl,jal
 			
 		
-			ALUOp <= "000" when (InstrOp = "000000")							
+			ALUOp <= "100" when (InstrOp = "000000")							
 -- case for R-format(ADD,SUB,DIV, DIVU, MUL and/or MULT, MULU, MFHI, MFLO,AND,NOR,OR,XOR,SLL,SLLV,SRL,SRLV,SRA,SRAV,SLT)																								
 				 else "001" when (InstrOp = "001000" or InstrOp = "100011" or InstrOp ="101011")	-- case for Addi,LW,SW
 				 else "010" when (InstrOp = "001010")								-- case for slti
 				 else "011" when (InstrOp = "001111")								-- case for LUI
-				 else "100" when (InstrOp = "000100")								-- case for BEQ
-				 else "101" when (InstrOp = "000001" and Instrbit20 = '0')		-- case for BEGZ
-				 else "110" when (InstrOp = "000001" and Instrbit20 = '1')		-- case for Begzal
-				 else "111";																-- case for ORI
+				 else "111" when (InstrOp = "001101")								-- case for ORI
+				 else "000" ;																-- case for nop
 end Behavioral;
 

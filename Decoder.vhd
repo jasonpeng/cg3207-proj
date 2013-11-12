@@ -52,9 +52,7 @@ entity Decoder is
 			  -- wb
 			  RegWrite: out std_logic;
 			  MemtoReg: out std_logic;
-			  --Mem
 			  --MEM 
-			  Branch : OUT STD_LOGIC; 
            MemRead : OUT STD_LOGIC; 
 			  MemWrite : OUT STD_LOGIC; 
 			  --EX 
@@ -64,9 +62,12 @@ entity Decoder is
            --JUMP 
 			  Jump : OUT STD_LOGIC; 
            JumpPC : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-			 
+			  -- Branch Controls
+			  EX_MEM_REG_RD : in std_logic_vector(5 downto 0);
 			  Branch_Sign_Extended: out std_logic_vector(31 downto 0);
-			  read_data_1: out std_logic_vector (31 downto 0);
+			  PCSrc : OUT STD_LOGIC; 
+
+ 			  read_data_1: out std_logic_vector (31 downto 0);
 			  read_data_2: out std_logic_vector (31 downto 0);
 -- Check Registers
 				Reg_S1 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
@@ -93,7 +94,6 @@ architecture Behavioral_Decoder of Decoder is
 		RegWrite:out std_logic;
 		MemRead:out std_logic;
 		MemWrite:out std_logic;
-		Branch: out std_logic;
 		Jump: out std_logic;
 		ALUOp: out std_logic_vector(2 downto 0));
  end component;-- RegWrite internal signal
@@ -101,12 +101,13 @@ architecture Behavioral_Decoder of Decoder is
 --	Registers 
 	TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
 	signal register_array: register_file;
+	alias opcode: std_logic_vector(5 downto 0) is In_Instr(31 downto 26);
 	alias reg_rs: std_logic_vector(4 downto 0) is In_Instr(25 downto 21);
 	alias reg_rt: std_logic_vector(4 downto 0) is In_Instr(20 downto 16);
+	alias reg_rd: std_logic_vector(4 downto 0) is In_Instr(15 downto 11);
+	alias funct: std_logic_vector(5 downto 0) is In_Instr(5 downto 0);
 	signal register_low: std_logic_vector(31 downto 0);
 	signal register_high: std_logic_vector(31 downto 0);
-	signal read_addr1: std_logic_vector(4 downto 0);
-	signal read_addr2: std_logic_vector(4 downto 0);
 	signal write_addr: std_logic_vector(4 downto 0);
 	signal imm_value : std_logic_vector (15 downto 0);
 	
@@ -123,33 +124,35 @@ architecture Behavioral_Decoder of Decoder is
 -- for data hazzard detection 
 	SIGNAL STALL: std_logic;
 	SIGNAL hd_stall: std_logic;
+-- for control branch
+   signal Branch: std_logic;
+	signal Forward_c: std_logic;
+	signal Forward_d: std_logic;
+	signal cmp_A: std_logic_vector(31 downto 0);
+	signal cmp_B: std_logic_vector(31 downto 0);
+	signal cmp_result: std_logic;
 begin
 
-	read_addr1 <= In_Instr(25 downto 21);
-	read_addr2 <= In_Instr(20 downto 16);
 	imm_value <= In_Instr(15 downto 0);
 	-- Read Register 1 Operation
-	
-
 	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
-	-- JumpPC = rs -- JR,JALR		R type
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
-	JumpPC <= register_array(CONV_INTEGER(In_Instr(25 downto 21))) when (In_Instr(31 downto 26) = "000000" )
-				else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00" ;
-	-- Reg(31) is 
-	register_array(31) <= (In_PC + 4) when (In_Instr(31 downto 26)= "000011");	-- when instrop is JAL, store the jumpPC to register 31
-	register_array(conv_integer(In_Instr(15 downto 11))) <= (In_PC + 4) when (In_Instr(31 downto 26) = "000000" and In_Instr(5 downto 0)  = "001001") 	-- case jalr
-																				else register_low when (In_Instr(31 downto 26) ="000000" and In_Instr(5 downto 0) = "010010")	-- case mvlo
-																				else register_high when (In_Instr(31 downto 26) = "000000" and In_Instr(5 downto 0) = "010000"); -- case mvhi
+	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or Opcode = "000000")-- case for jump
+				else '0';
+	JumpPC <= register_array(CONV_INTEGER(reg_rs)) when (Opcode= "000000")
+		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
+	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
+												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
+												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 	
 	--register_low <= writedata1 when (Mul_or_Div = '1')
 		--				else x"00000000";
 	--register_high <= writedata2 when (Mul_or_Div = '1')
 			--			else x"00000000";
-	Instr_25to21 <= In_Instr(25 downto 21);
-	Instr_20to16 <= In_Instr(20 downto 16);
-	Instr_15to11 <= In_Instr(15 downto 11);
+	Instr_25to21 <= reg_rs;
+	Instr_20to16 <= reg_rt;
+	Instr_15to11 <= reg_rd;
 -- check registers;
 	Reg_S1 <= register_array(1); 
 	Reg_S2 <= register_array(2); 
@@ -162,10 +165,32 @@ begin
 
 -- Data hazzard detection
 	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
-							((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
-						else '0';
+						((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
+			 else '0';
 	ID_STALL <= hd_stall; 
 	STALL <= hd_stall;
+	
+-- Branch Control hazards
+
+	--control signal branch is 1 when BEQ, BGEZ,BGEZAL
+   Branch <= '1' when (Opcode= "000100" or Opcode="000001")								
+					 else '0';
+	-- for Branch cases, Forward_d is only valid in BEQ case,
+	Forward_c <= '1' when (Branch = '1' and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rs))
+					else '0';
+	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rt))
+					else '0';
+	-- CMP_A and CMP_B IN BEQ CASE
+	cmp_A <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
+			else register_array(CONV_INTEGER(reg_rs));
+	cmp_B <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
+			else register_array(CONV_INTEGER(reg_rt));
+	cmp_result <= '1' when ((Opcode= "000100" and (cmp_A = cmp_B))		-- case for BEQ
+							or (In_Instr(31 downto 26)="000001" and (cmp_A >= X"00000000"))) --case for BGEZ & BGEZAL
+					else '0';
+	PCSrc <= cmp_result and Branch; 
+	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
+								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
 	ctrl: control port map
 		(
 				Instr => In_Instr,
@@ -175,8 +200,6 @@ begin
 				RegWrite => RegWrite_out,
 				MemRead => MemRead_out,
 				MemWrite => MemWrite_out,
-				Branch => Branch_out,
-				Jump => Jump_out,
 				ALUOp => ALUOp_out);
 	
 rf:process (Clk)
@@ -186,8 +209,8 @@ rf:process (Clk)
 				register_array(conv_integer(write_address)) <= Writedata1;
 			end if;
 		elsif(Clk'event and Clk = '0') then
-			read_data_1 <= register_array(CONV_INTEGER(read_addr1));
-			--read_data_2 <= register_array(CONV_INTEGER(read_addr2));
+			read_data_1 <= register_array(CONV_INTEGER(reg_rs));
+			read_data_2 <= register_array(CONV_INTEGER(reg_rt));
 		end if;
 	end process;
 	
@@ -196,23 +219,19 @@ pipeline: process (Clk,Reset)
 		if Reset = '1' then
 			  RegWrite <= '0';
 			  MemtoReg <= '0';
-			  Branch <= '0';
            MemRead <='0'; 
 			  MemWrite <='0'; 
            RegDst <='0'; 
 			  ALUop <="000"; 
            ALUSrc <='0'; 
-			  Jump <='0';
 		elsif rising_edge (Clk) then
 				if (Stall = '0') then
-					Jump <= Jump_out; 
 					RegDst <= RegDst_out; 
 					ALUSrc <= ALUSrc_out; 
 					MemtoReg <= MemtoReg_out; 
 					RegWrite <= RegWrite_out; 
 					MemRead <= MemRead_out; 
 					MemWrite <= MemWrite_out;
-					Branch <= Branch_out;
 					ALUOp <= ALUOp_out;
 				end if;
 				
@@ -220,13 +239,11 @@ pipeline: process (Clk,Reset)
 				-- if pipeline is stalled by hazzard detection, insert nop
 				  RegWrite <= '0';
 				  MemtoReg <= '0';
-				  Branch <= '0';
 				  MemRead <='0'; 
 				  MemWrite <='0'; 
 				  RegDst <='0'; 
 				  ALUop <="000"; 
 				  ALUSrc <='0'; 
-				  Jump <='0'; 
 				end if;
 		end if;
 	end process;

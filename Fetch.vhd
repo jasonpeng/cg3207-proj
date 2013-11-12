@@ -38,13 +38,14 @@ entity Fetch is
 		
 		Instruction : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 		PC_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		--PC_plus_4_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		--ADD_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 			-- to be defined
 		PC_out_4: out std_logic_vector(31 downto 0);
+		
 		BEQ_PC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 		PCSrc : IN STD_LOGIC; 
+		
 		Jump : IN STD_LOGIC; 
 		JumpPC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 );	-- JUmp address
+		
 		IF_ID_Flush: out std_logic
 		
  ); 
@@ -73,7 +74,8 @@ instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
 		PC_out <= incPC;
 		read_addr <= "00"&PC(31 downto 2);
 		PC_out_4 <= read_addr;
-		IF_ID_Flush <='1' when Jump = '1'; 
+		IF_ID_Flush <='1' when (Jump = '1' or PCSrc = '1')				-- in case Jump and Branch, flush the IF_ID
+							else '0'; 
 	process (Clk,Reset)
 	begin
 		if (Reset = '1') then 
