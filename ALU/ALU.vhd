@@ -153,6 +153,8 @@ use ieee.numeric_std.ALL;
 
 entity complexop is
 Port (  Clk         : in    STD_LOGIC;
+			Enable: in std_logic;
+
         Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -166,18 +168,20 @@ architecture beh_complexop of complexop is
 	component Multiply is
 	port(
 		 Clk_a      : in    STD_LOGIC;
-         Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
+       Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Result1_a	: out	STD_LOGIC_VECTOR (31 downto 0);
 		 Result2_a	: out	STD_LOGIC_VECTOR (31 downto 0);
-         Done_a     : out   STD_LOGIC
+       Done_a     : out   STD_LOGIC
+		 
 	);
     end component;
 
 	component divider is
 	port (
-        clk_b		: in  std_logic;
+		  enable: in std_logic;
+		  Control_a: in std_logic_vector(2 downto 0);
         dividend_i	: in  std_logic_vector(31 downto 0);
         divisor_i	: in  std_logic_vector(31 downto 0);
         quotient_o	: out std_logic_vector(31 downto 0); 
@@ -189,36 +193,23 @@ architecture beh_complexop of complexop is
 
     signal mul_result1 :  std_logic_vector (31 downto 0) :=X"00000000";
     signal mul_result2 : std_logic_vector (31 downto 0) := X"00000000";
-    signal div_quotient_s: std_logic_vector (31 downto 0) := X"00000000";
-    signal div_remainder_s: std_logic_vector (31 downto 0) := X"00000000";
-    signal div_remainder_unsign: std_logic_vector(31 downto 0) :=X"00000000";
-    signal div_quotient_unsign : std_logic_vector (31 downto 0) := X"00000000";
-    signal Operand1_unsign: std_logic_vector (31 downto 0);
-    signal Operand2_unsign: std_logic_vector (31 downto 0);
+    signal div_quotient: std_logic_vector (31 downto 0) := X"00000000";
+    signal div_remainder: std_logic_vector (31 downto 0) := X"00000000";
+
     signal done_mul: std_logic :='0';
-    signal done_div_s: std_logic := '0';
-    signal done_div_unsign: std_logic :='0';
+    signal done_div: std_logic := '0';
     signal debug_s : std_logic_vector(27 downto 0) := X"0000000";
-    signal debug_unsign : std_logic_vector(27 downto 0) := X"0000000";
 begin
-    Operand1_unsign <=  not(Operand1) + 1;
-	Operand2_unsign <=  not(Operand2) + 1;
 	MULTIPLIER: multiply port map (Clk,Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
-	DIVIDERSIGN: divider port map (Clk,Operand1, Operand2, div_remainder_s, div_quotient_s, done_div_s,debug_s);
-	DIVIDERUNSIGN: divider port map (Clk,Operand1_unsign,Operand2_unsign,div_remainder_unsign,div_quotient_unsign,done_div_unsign,debug_unsign );
-	--
+	DIVIDER_part: divider port map (enable,Control,Operand1, Operand2, div_remainder, div_quotient, done_div,debug_s);
+	
 	Result1 <= mul_result1 when (Control(1)='0' and done_mul ='1')
-				 else div_remainder_s when (Control(1 downto 0) ="10" and done_div_s = '1')
-				 else div_remainder_unsign when (Control(1 downto 0) = "11" and done_div_unsign ='1')
-				 else X"FFFFFFFF";
+				 else div_remainder when (Control(1) ='1' and done_div = '1');
 	Result2 <= mul_result2 when (Control(1)='0' and done_mul ='1')
-				 else div_quotient_s when (Control(1 downto 0) ="10" and done_div_s = '1')
-				 else div_quotient_unsign when (Control(1 downto 0) = "11" and done_div_unsign ='1')
-				 else X"FFFFFFFF";
-    Debug <= debug_s when (Control ="010") else debug_unsign;
+				 else div_quotient when (Control(1) ='1' and done_div = '1');
+   Debug <= debug_s when (Control(1) = '1' and done_div = '1');
 	Done <=  done_mul when (Control(1) ='0')
-				else done_div_s when(Control(1 downto 0) ="10")
-				else done_div_unsign when (Control(1 downto 0) ="11")
+				else done_div when(Control(1) ='1')
                 else '0';
 end beh_complexop;
 
@@ -290,6 +281,7 @@ architecture Behavioral of alu is
             Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
             Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
             Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
+				Enable: out std_logic;
             Done        : out   STD_LOGIC);
     end component;
     

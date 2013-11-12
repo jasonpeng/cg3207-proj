@@ -17,96 +17,99 @@
 -- Additional Comments: 
 --
 ----------------------------------------------------------------------------------
-library IEEE; 
-use IEEE.std_logic_1164.all; 
-use IEEE.std_logic_arith.all; 
-  
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_unsigned.all;
+use ieee.std_logic_arith.all;   
+
 entity divider is  
   port (
-  	clk_b		: in  std_logic;
-  	dividend_i	: in  std_logic_vector(31 downto 0);
-   divisor_i	: in  std_logic_vector(31 downto 0);
-   quotient_o	: out std_logic_vector(31 downto 0); 
-   remainder_o	: out std_logic_vector(31 downto 0);
-	done_b		: out std_logic;
-	debug_b :	out std_logic_vector(27 downto 0)
-  );
+		  enable: in std_logic;
+		  Control_a: in std_logic_vector(2 downto 0);
+        dividend_i	: in  std_logic_vector(31 downto 0);
+        divisor_i	: in  std_logic_vector(31 downto 0);
+        quotient_o	: out std_logic_vector(31 downto 0); 
+        remainder_o	: out std_logic_vector(31 downto 0);
+        done_b		: out std_logic;
+        debug_b :	out std_logic_vector(27 downto 0)  );
       
 end divider;
 
 architecture rtl of divider is
-  signal i			: integer range 0 to 31;
-  signal ended		: std_logic;
-  signal dividend_shift	: std_logic_vector(31 downto 0);
-  signal divisor		: std_logic_vector(31 downto 0);
-  signal next_quotient	: std_logic_vector(31 downto 0);
-  signal next_remainder	: std_logic_vector(31 downto 0);    
-  signal quotient		: std_logic_vector(31 downto 0);
-  signal remainder	: std_logic_vector(31 downto 0);    
-  signal olddividend_i	: std_logic_vector(31 downto 0);  
-  signal olddivisor_i	: std_logic_vector(31 downto 0);  
-begin  -- rtl
-  -- purpose: Divide dividend through divisor and deliver the result to quotient
-  --          and the remainder to remainder.
-  -- Performs a synchronous tail division.
-  check0:process (divisor_i)
-	begin
-	if(divisor_i = X"00000000") then 
-		debug_b <= X"0000001";
-	end if;
-	end process check0;
 
-  p_divide: process (dividend_shift, divisor, quotient, remainder, i)
-  	variable v_quo : std_logic_vector(31 downto 0);
-  	variable v_rem : std_logic_vector(31 downto 0);
-  begin  -- process p_divide
-	-- initialization	
-	v_quo := quotient;
-	v_rem := remainder;
-	
-	-- shift in new bit from dividend
-	v_rem(31 downto 1) := remainder(30 downto 0);
-	v_rem(0) := dividend_shift(31);
-				
-	-- if divisor can be subtracted from current remainder, do it and set
-	-- current quotient bit to '1'
-	if v_rem >= divisor then
-       		v_quo(0) := '1';
-       		v_rem := conv_std_logic_vector (unsigned (v_rem) - unsigned (divisor), 32);
-       	else
-       		v_quo(0) := '0';
-       	end if;
- 	
- 	next_quotient <= v_quo;
- 	next_remainder <= v_rem;
-  end process p_divide;
- 
-  process (clk_b)
-  begin
-  	if (clk_b'event and clk_b = '1') then
-  		remainder <= next_remainder;
-  		quotient(31 downto 1) <= next_quotient(30 downto 0);
-  		dividend_shift(31 downto 1) <= dividend_shift(30 downto 0);
-  		
-  		if (dividend_i /= olddividend_i or divisor_i /= olddivisor_i) then
-  			i <= 31;
-  			done_b <= '0';
-  			ended <= '0';
-  			remainder <= (others => '0');
-  			quotient <= (others => '0');
-  			dividend_shift <= dividend_i;
-  			divisor <= divisor_i;
-			olddividend_i <= dividend_i;
-			olddivisor_i <= divisor_i;
-  		elsif (i > 0) then
-  			i <= i - 1;
-  		elsif (ended = '0') then
-  			remainder_o <= next_remainder;
-  			quotient_o <= next_quotient;
-  			done_b <= '1';
-  			ended <= '1';
-  		end if;
-  	end if;
-  end process;
+signal counter: std_logic_vector (5 downto 0);
+begin  
 
+process(enable,counter)
+variable divident:std_logic_vector(31 downto 0);
+variable divisor: std_logic_vector(31 downto 0);
+variable tmp_rem: std_logic_vector(31 downto 0) := (others=>'0');
+variable tmp_quo: std_logic_vector (31 downto 0):=(others =>'0');
+variable rem_sign: std_logic := '0';
+variable quo_sign: std_logic := '0';
+variable divisor_check:std_logic;
+begin
+	if(enable'event and enable ='1') then
+		done_b <= '0';
+		counter <= "100001";
+	elsif(counter = "100001") then		--initialize
+			tmp_rem := X"00000000";
+			tmp_quo := X"00000000";
+			done_b <= '0';
+			rem_sign := '0';
+			quo_sign := '0';
+			divident := dividend_i;
+			divisor := divisor_i;
+			if(divisor =X"00000000") then
+				divisor_check := '0';
+			else
+				divisor_check := '1';
+			end if;
+			if(control_a = "010") then
+				rem_sign := divident(31);
+				quo_sign := divident(31) xor divisor(31);
+				if(divident(31) = '1') then
+					divident := (not divident) + 1;
+				end if;
+				if(divisor(31) = '1') then
+					divisor := (not divisor) + 1;
+				end if;
+			end if;
+			counter <= counter -1 ;
+	elsif (counter ="000000") then
+		if(divisor_check='1') then
+				if(rem_sign = '1') then
+					remainder_o <= (not tmp_rem) + 1;
+				else 
+					remainder_o <= tmp_rem;
+				end if;
+				if(quo_sign = '1') then
+					quotient_o <= (not tmp_quo) + 1;	
+				else 
+					quotient_o <= tmp_quo;
+				end if;
+				debug_b <= X"0000000";
+			else
+				quotient_o <= X"00000000";
+				remainder_o<= X"00000000";
+				debug_b <= X"fffffff";
+			end if;
+				done_b<= '1';
+	else
+			tmp_rem(31 downto 1):= tmp_rem(30 downto 0);
+			tmp_rem(0) := divident(31);
+			tmp_quo(31 downto 1):= tmp_quo(30 downto 0);
+
+			if(tmp_rem >= divisor) then
+				tmp_rem  :=conv_std_logic_vector (unsigned (tmp_rem) - unsigned (divisor), 32);
+				tmp_quo(0):= '1';
+				debug_b <= X"0000010";
+			else
+				debug_b<=X"0000000";
+				tmp_quo(0):='0';
+			end if;
+			divident(31 downto 1) := divident(30 downto 0);
+			counter <= counter - 1;
+		end if;
+	end process;
 end rtl;
