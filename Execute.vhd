@@ -171,6 +171,10 @@ ALU1 : ALU Port Map (
 	Debug => ALU_Debug
 );
 --
+
+-- Set MEM_ALU_Result
+OUT_EX_MM_ALU_Result_1 <= ALU_R1;
+OUT_EX_MM_ALU_Result_2 <= ALU_R2;
 	
 process(IN_ID_EX_ALUOp,
 		IN_ID_EX_SignExtended,
@@ -268,7 +272,7 @@ begin
 				ALU_Ctrl <= "011011";
 			when "101010" => -- slt, set less than
 				ALU_Ctrl <= "010110";
-			when "100100" => -- logical and, logical and
+			when "100100" => -- logical and
 				ALU_Ctrl <= "000001";
 			when "100101" => -- logical or
 				ALU_Ctrl <= "000010";
@@ -301,10 +305,6 @@ begin
 	else
 		OUT_EX_MM_MULDIV <= '0';
 	end if;
-	
-	-- Set MEM_ALU_Result
-	OUT_EX_MM_ALU_Result_1 <= ALU_R1;
-	OUT_EX_MM_ALU_Result_2 <= ALU_R2;
 	
 	-- Set MEM_Zero
 	if (ALU_R1 = X"00000000") then
