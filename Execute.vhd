@@ -1,23 +1,3 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    18:04:21 10/29/2013 
--- Design Name: 
--- Module Name:    ALU - Behavioral_ALU 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 0.02 - Implemented Execute with naive ALU
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
-
 -----------------------------
 -------- FORWARDING UNIT ----
 library IEEE;
@@ -88,6 +68,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 -- arithmetic functions with Signed or Unsigned values
 use IEEE.NUMERIC_STD.ALL;
 
+--use CUSTOM_TYPES.ALL;
+
 entity Execute is
     Port (
 		IN_ID_EX_ALUOp : in  STD_LOGIC_VECTOR(2 downto 0);
@@ -114,7 +96,7 @@ entity Execute is
 		-- alu related
 		OUT_EX_MM_OVF : out STD_LOGIC;
 		OUT_EX_MM_Zero : out STD_LOGIC;
-		OUT_EX_MM_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
+		OUT_EX_MM_ALU_Result_1 : out STD_LOGIC_VECTOR(31 downto 0);
 		OUT_EX_MM_ALU_Result_2 : out STD_LOGIC_VECTOR(31 downto 0);
 		OUT_EX_MM_MULDIV : out STD_LOGIC;  -- asserts for mul/div results
 
@@ -145,6 +127,29 @@ signal FWU_A : STD_LOGIC_VECTOR(1 downto 0);
 signal FWU_B : STD_LOGIC_VECTOR(1 downto 0);
 --
 
+-- ALU Component --
+component ALU
+	Port (	
+		Clk			: in	STD_LOGIC;
+		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
+		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
+		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
+		Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
+		Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
+		Debug			: out	STD_LOGIC_VECTOR (31 downto 0)
+		);
+end component;
+--
+
+-- ALU Signals
+signal ALU_Ctrl : STD_LOGIC_VECTOR(5  downto 0);
+signal ALU_Op1  : STD_LOGIC_VECTOR(31 downto 0);
+signal ALU_Op2  : STD_LOGIC_VECTOR(31 downto 0);
+signal ALU_R1   : STD_LOGIC_VECTOR(31 downto 0);
+signal ALU_R2   : STD_LOGIC_VECTOR(31 downto 0);
+signal ALU_Debug: STD_LOGIC_VECTOR(31 downto 0);
+--
+
 begin
 
 -- Forwarding Unit Port Map --
@@ -157,6 +162,16 @@ FWU : Forwarding_Unit Port Map (
 	MM_WB_RD => IN_MM_WB_RD,
 	FW_A => FWU_A,
 	FW_B => FWU_B
+);
+
+ALU1 : ALU Port Map (
+	Clk => '1',
+	Control => ALU_Ctrl,
+	Operand1 => ALU_Op1, 
+	Operand2 => ALU_Op2,
+	Result1 => ALU_R1,
+	Result2 => ALU_R2,
+	Debug => ALU_Debug
 );
 --
 	
@@ -182,10 +197,7 @@ process(IN_ID_EX_ALUOp,
 	
 	variable A : STD_LOGIC_VECTOR(31 downto 0); -- op1 for ALU
 	variable B : STD_LOGIC_VECTOR(31 downto 0); -- op2 for ALU
-	variable C : STD_LOGIC_VECTOR(31 downto 0); -- result
-	variable D : STD_LOGIC_VECTOR(63 downto 0); -- for mul
-	variable Q : STD_LOGIC_VECTOR(31 downto 0); -- div q
-	variable R : STD_LOGIC_VECTOR(31 downto 0); -- div r
+	variable shftamt : STD_LOGIC_VECTOR(31 downto 0); -- shift amount
 	variable R_funct : STD_LOGIC_VECTOR(5 downto 0); -- ALU R type funct (Instr[5-0])
 begin
 	-- forwarding mux for A and B (op1 and op2)
@@ -208,60 +220,86 @@ begin
 		when others => B := (others => 'X');
 	end case;
 	
+	-- set ALU Op1 and Op2
+	ALU_Op1 <= A;
+	ALU_Op2 <= B;
+	shftamt := X"000000" & "000" & IN_ID_EX_Instr_10_6;
+	
 	-- mux for ALUOp
 	case IN_ID_EX_ALUOp is
-	when "000" => -- R type
+	when "100" => -- R type
 		R_funct := IN_ID_EX_SignExtended(5 downto 0);
 		case R_funct is
-			when "000000" => C := std_logic_vector(shift_left(unsigned(B), to_integer(unsigned(IN_ID_EX_Instr_10_6)))); -- sll
-			when "000100" => C := std_logic_vector(shift_left(unsigned(B), to_integer(unsigned(A)))); -- sllv
-			when "000011" => C := std_logic_vector(shift_right(signed(B), to_integer(unsigned(IN_ID_EX_Instr_10_6)))); -- sra
-			when "000111" => C := std_logic_vector(shift_right(signed(B), to_integer(unsigned(A)))); -- srav
-			when "000010" => C := std_logic_vector(shift_right(unsigned(B), to_integer(unsigned(IN_ID_EX_Instr_10_6)))); -- srl
-			when "000110" => C := std_logic_vector(shift_right(unsigned(B), to_integer(unsigned(A)))); -- srlv
-			-- TODO set DM_OVF
-			when "100000" => C := std_logic_vector(signed(A) + signed(B)); -- add, with overflow;
-			when "100001" => C := std_logic_vector(unsigned(A) + unsigned(B)); -- addu
-			when "100010" => C := std_logic_vector(signed(A) - signed(B)); -- sub
-			when "100011" => C := std_logic_vector(unsigned(A) - unsigned(B)); -- subu
-			when "011000" => D := std_logic_vector(signed(A) * signed(B)); -- mult
-				C := D(31 downto 0);
-				OUT_EX_MM_ALU_Result_2 <= D(63 downto 32);
-			when "011001" => D := std_logic_vector(unsigned(A) * unsigned(B)); -- multu
-				C := D(31 downto 0);
-				OUT_EX_MM_ALU_Result_2 <= D(63 downto 32);
-			when "011010" => Q := std_logic_vector(signed(A) / signed(B)); -- div
-				R := std_logic_vector(signed(A) rem signed(B));
-				C := Q;
-				OUT_EX_MM_ALU_Result_2 <= R;
-			when "011011" => Q := std_logic_vector(unsigned(A) / unsigned(B)); -- divu
-				R := std_logic_vector(unsigned(A) rem unsigned(B));
-				C := Q;
-				OUT_EX_MM_ALU_Result_2 <= R;
-			when "101010" => if (A < B) then C := X"00000001"; else C:= X"00000000"; end if; -- slt, set less than
-			--when "101011" => ; -- sltu
-			when "100100" => C := A AND B; -- and, logical and
-			when "100101" => C := A OR B; -- or
-			when "100111" => C := A NOR B; -- nor
-			when "100110" => C := A XOR B; -- xor			
-			when others => C := (others => 'Z');
+			when "000000" => -- sll
+				ALU_Op1 <= B;
+				ALU_Op2 <= shftamt;
+				ALU_Ctrl <= "001000";
+			when "000100" => -- sllv
+				ALU_Op1 <= B;
+				ALU_Op2 <= A;
+				ALU_Ctrl <= "001000";
+			when "000011" => -- sra
+				ALU_Op1 <= B;
+				ALU_Op2 <= shftamt;
+				ALU_Ctrl <= "001011";
+			when "000111" => -- srav
+				ALU_Op1 <= B;
+				ALU_Op2 <= A;
+				ALU_Ctrl <= "001011";
+			when "000010" => -- srl
+				ALU_Op1 <= B;
+				ALU_Op2 <= shftamt;
+				ALU_Ctrl <= "001010";
+			when "000110" => -- srlv
+				ALU_Op1 <= B;
+				ALU_Op2 <= A;
+				ALU_Ctrl <= "001010";
+			when "100000" => -- add, with overflow;
+				ALU_Ctrl <= "010000";
+			when "100001" => -- addu
+				ALU_Ctrl <= "010001";
+			when "100010" => -- sub
+				ALU_Ctrl <= "010010";
+			when "100011" => -- subu
+				ALU_Ctrl <= "010011";
+			when "011000" => -- mult
+				ALU_Ctrl <= "011000";
+			when "011001" => -- multu
+				ALU_Ctrl <= "011001";
+			when "011010" => -- div
+				ALU_Ctrl <= "011010";
+			when "011011" => -- divu
+				ALU_Ctrl <= "011011";
+			when "101010" => -- slt, set less than
+				ALU_Ctrl <= "010110";
+			when "100100" => -- logical and, logical and
+				ALU_Ctrl <= "000001";
+			when "100101" => -- logical or
+				ALU_Ctrl <= "000010";
+			when "100111" => -- nor
+				ALU_Ctrl <= "000100";
+			when "100110" => -- xor			
+				ALU_Ctrl <= "000011";
+			when others => -- undefined, nop
+				ALU_Ctrl <= "000000";
 		end case;
-	when "001" => -- LW, SW, ADDI
-		C := std_logic_vector(to_unsigned(
-			to_integer(unsigned(A)) + to_integer(signed(B)),
-			32
-		));
+	when "000" => -- nop
+		ALU_Ctrl <= "000000";
+	when "001" => -- LW, SW, ADDI, use ALU 'add'
+		ALU_Ctrl <= "010000";
 	when "010" => -- SLTI
-		if (A < B) then C := X"00000001"; else C:= X"00000000"; end if;
+		ALU_Ctrl <= "010110";
 	when "011" => -- LUI
-		C := std_logic_vector(unsigned(B) sll 16);
+		ALU_Op1 <= B;
+		ALU_Op2 <= X"00000010";
+		ALU_Ctrl <= "001000";
 	when "111" => -- ORI
-		C := A OR B;
+		ALU_Ctrl <= "000010";
 	when others =>
-		C := (others => 'Z');
+		ALU_Ctrl <= "000000";
 	end case;
 	
-	if ( IN_ID_EX_ALUOp = "000" 
+	if ( IN_ID_EX_ALUOp = "100" 
 		AND ( R_funct="011000" OR R_funct="011001" OR R_funct="011010" OR R_funct="011011")) then
 		OUT_EX_MM_MULDIV <= '1';
 	else
@@ -269,10 +307,11 @@ begin
 	end if;
 	
 	-- Set MEM_ALU_Result
-	OUT_EX_MM_ALU_Result <= C;
+	OUT_EX_MM_ALU_Result_1 <= ALU_R1;
+	OUT_EX_MM_ALU_Result_2 <= ALU_R2;
 	
 	-- Set MEM_Zero
-	if (C = X"00000000" AND IN_ID_EX_ALUOp = "100") then
+	if (ALU_R1 = X"00000000") then
 		OUT_EX_MM_Zero <= '1';
 	else
 		OUT_EX_MM_Zero <= '0';
