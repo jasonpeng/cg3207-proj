@@ -6,7 +6,7 @@ package CUSTOM_TYPES is
     subtype SL     is std_logic;
     subtype SLV_32 is std_logic_vector(31 downto 0);
     subtype SLV_6  is std_logic_vector( 5 downto 0);
-    subtype SLV_4  is std_logic_vector( 4 downto 0);
+    subtype SLV_5  is std_logic_vector( 4 downto 0);
     -- R-type
     type R32    is range 31 downto 0;
     type Op     is range 31 downto 26;
@@ -26,10 +26,10 @@ package CUSTOM_TYPES is
             Instr : SLV_32;
         end record;
 
-    type TYPE_J is
+    type TYPE_Jump is
         record
-            Jump      : std_logic;
-            JumpPC    : SLV_32;
+            EN       : std_logic;
+            PC       : SLV_32;
         end record;
 
     type TYPE_ID_DATA is
@@ -75,7 +75,7 @@ package CUSTOM_TYPES is
 
     type TYPE_WB_Write is
         record
-            RegAddr   : std_logic;
+            RegAddr   : SLV_5;
             RegWrite  : std_logic;
             RegData1  : SLV_32;
             RegData2  : SLV_32;
