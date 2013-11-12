@@ -78,7 +78,7 @@ entity Decoder is
 				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			   
+				Reg_s31: OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
 			  Instr_25to21: out std_logic_vector(4 downto 0);
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
 			  Instr_15to11: out std_logic_vector (4 downto 0)
@@ -141,10 +141,7 @@ begin
 				else '0';
 	JumpPC <= register_array(CONV_INTEGER(reg_rs)) when (Opcode= "000000")
 		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
-	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
-												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
-												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
-	-- for mul & div cases
+--	-- for mul & div cases
 	register_low <= writedata1 when (Mul_or_Div = '1')
 					else x"00000000";
 	register_high <= writedata2 when (Mul_or_Div = '1')
@@ -161,7 +158,7 @@ begin
 	Reg_S6 <= register_array(6); 
 	Reg_S7 <= register_array(7); 	
 	Reg_S8 <= register_array(8);
-   
+   Reg_S31 <= register_array(31);
 -- Data hazzard detection
 	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
 						((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
@@ -182,14 +179,18 @@ begin
 	-- CMP_A and CMP_B IN BEQ CASE
 	cmp_A <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
 			else register_array(CONV_INTEGER(reg_rs));
-	cmp_B <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
+	cmp_B <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_d = '1')
 			else register_array(CONV_INTEGER(reg_rt));
 	cmp_result <= '1' when ((Opcode= "000100" and (cmp_A = cmp_B))		-- case for BEQ
-							or (In_Instr(31 downto 26)="000001" and (cmp_A >= X"00000000"))) --case for BGEZ & BGEZAL
+							or (In_Instr(31 downto 26)="000001" and (cmp_A(31) ='0'))) --case for BGEZ & BGEZAL
 					else '0';
 	PCSrc <= cmp_result and Branch; 
-	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
-								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
+--	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
+--								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
+	--	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
+--												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
+--												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
+
 	ctrl: control port map
 		(
 				Instr => In_Instr,
@@ -203,18 +204,28 @@ begin
 	
 rf:process (Clk,Reset)
 	begin
-		if(Reset = '1') then
-			for i in 0 to 31 loop
-				register_array(i) <= X"00000000";
-			end loop;
-		elsif (Clk'event and Clk = '1') then		
-			if(RegWrite_in = '1' and (write_address /= 0) )then
-				--register_array(conv_integer(write_address)) <= writedata1;
-				register_array(3) <= x"01010100";
+		if(Clk'event and Clk = '1') then
+			if(Reset = '1') then 
+				for i in 0 to 31 loop
+					register_array(i) <= X"00000000";
+				end loop;
+			elsif(RegWrite_in = '1' and (write_address /= 0) )then
+				register_array(conv_integer(write_address)) <= writedata1;
+				if(Opcode = "000000" and funct = "001001") then   	-- case jalr
+					register_array(conv_integer(reg_rd)) <= (In_PC + 4);
+				elsif	(Opcode="000000" and funct= "010010")	then					
+					register_array(conv_integer(reg_rd)) <=register_low ;-- case mvlo
+				elsif (Opcode= "000000" and funct= "010000") then
+					 register_array(conv_integer(reg_rd)) <= register_high ; -- case mvhi
+				end if;
+				if((cmp_result = '1' and Branch = '1' and (reg_rt = "10001")) or Opcode = "000011") then
+					register_array(31) <= (In_PC + X"0000004");
+				end if;
 			end if;
---		elsif(Clk'event and Clk = '0') then
---			read_data_1 <= register_array(CONV_INTEGER(reg_rs));
---			read_data_2 <= register_array(CONV_INTEGER(reg_rt));
+
+		elsif Clk = '0' then
+				read_data_1 <= register_array(CONV_INTEGER(reg_rs));
+				read_data_2 <= register_array(CONV_INTEGER(reg_rt));
 		end if;
 	end process;
 	

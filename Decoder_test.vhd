@@ -83,6 +83,8 @@ ARCHITECTURE behavior OF decoder_test IS
          Reg_S6 : OUT  std_logic_vector(31 downto 0);
          Reg_S7 : OUT  std_logic_vector(31 downto 0);
          Reg_S8 : OUT  std_logic_vector(31 downto 0);
+		   Reg_S31 : OUT  std_logic_vector(31 downto 0);
+
          Instr_25to21 : OUT  std_logic_vector(4 downto 0);
          Instr_20to16 : OUT  std_logic_vector(4 downto 0);
          Instr_15to11 : OUT  std_logic_vector(4 downto 0)
@@ -127,6 +129,8 @@ ARCHITECTURE behavior OF decoder_test IS
    signal Reg_S6 : std_logic_vector(31 downto 0);
    signal Reg_S7 : std_logic_vector(31 downto 0);
    signal Reg_S8 : std_logic_vector(31 downto 0);
+	   signal Reg_S31 : std_logic_vector(31 downto 0);
+
    signal Instr_25to21 : std_logic_vector(4 downto 0);
    signal Instr_20to16 : std_logic_vector(4 downto 0);
    signal Instr_15to11 : std_logic_vector(4 downto 0);
@@ -172,6 +176,8 @@ BEGIN
           Reg_S6 => Reg_S6,
           Reg_S7 => Reg_S7,
           Reg_S8 => Reg_S8,
+          Reg_S31 => Reg_S31,
+
           Instr_25to21 => Instr_25to21,
           Instr_20to16 => Instr_20to16,
           Instr_15to11 => Instr_15to11
@@ -191,51 +197,64 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for 50 ns;	
-		Reset <= '1';
-		wait for 50 ns;
-		Reset <= '0';
-		In_PC <= X"00000001";
-		In_Instr <= X"3c010064";	--lui $1,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00001";
 		wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c030064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
-		wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c020064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
-				wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c020064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
-		wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c020064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
-		wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c020064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
-		wait for 100 ns;
-		In_PC <= X"00000002";
-		In_Instr <= X"3c020064";  --lui $2,1
-		RegWrite_in <='1';
-		WriteData1 <= X"00000001";
-		write_address <= "00010";
+      Reset <= '1';
+                wait for 100 ns;
+                Reset <= '0';
+                        IN_PC <= X"10000000";
+                        In_Instr <= X"34010064";
+                        write_address <= "00001";
+                        Writedata1 <= X"00000008";
+                        RegWrite_in <= '1';
+                wait for 100 ns;
+                        IN_PC <= X"10000004";
+                        In_Instr <= X"34020014";
+                        write_address <= "00010";
+                        Writedata1 <= X"0000000A";
+                        RegWrite_in <= '1';
+                wait for 100 ns;
+                        IN_PC <= X"10000008";
+                        In_Instr <= X"00221827";
+                        write_address <= "00011";
+                        Writedata1 <= X"00000010";
+                        RegWrite_in <= '1';
+      -- insert stimulus here 
+                wait for 100 ns;
+                        IN_PC <= X"1000000C";
+                        In_Instr <= X"34080064";
+                        write_address <= "00100";
+                        Writedata1 <= X"00000000";
+                        RegWrite_in <= '1';
+					wait for 100 ns;
+                        IN_PC <= X"1000000C";
+                        In_Instr <= x"1022fffd";
+                        write_address <= "00101";
+                        Writedata1 <= X"000000FF";
+                        RegWrite_in <= '1';
+					wait for 100 ns;
+								EX_MEM_REG_RD <= "00001";
+								In_Instr <= X"1022fffd"; -- case BEQ, $1,$2
+					wait for 100 ns;
+								EX_MEM_REG_RD <= "00001";
+								In_Instr <= x"0481fffb";
+					wait for 100 ns;
+								EX_MEM_REG_RD <= "00001";
+								In_Instr <= x"0421fffa";
+					wait for 100 ns;
+								EX_MEM_REG_RD <= "00001";
+								In_Instr <=x"0431fff9";
+					wait for 100 ns;
+								EX_MEM_REG_RD <= "00100";
+								In_Instr <= X"0491fff8";
+					wait for 100 ns;
+						
+
+
+
+
+
+
+	
 
 
 
