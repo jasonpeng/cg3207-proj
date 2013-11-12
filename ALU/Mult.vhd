@@ -39,6 +39,7 @@ signal Count: std_logic_vector(7 downto 0) :=X"04";
 signal prod: std_logic_vector(63 downto 0);
 begin
 process(Operand1_a,Operand2_a,Control_a)
+	variable sign: std_logic;
 	variable tmp: std_logic_vector(63 downto 0);
 	variable a_in: std_logic_vector(31 downto 0);
 	variable b_in: std_logic_vector(31 downto 0);
