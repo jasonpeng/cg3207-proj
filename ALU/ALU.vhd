@@ -97,29 +97,25 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.ALL;
 
 entity complexop is
-Port (  Clk         : in    STD_LOGIC;
-			Enable: in std_logic;
-
-        Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
+Port (Enable: in std_logic;
+      Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
 		Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
 		Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
-        Done        : out   STD_LOGIC);
+      Done        : out   STD_LOGIC);
 end complexop;
 
 architecture beh_complexop of complexop is
 	component Multiply is
 	port(
-		 Clk_a      : in    STD_LOGIC;
        Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Result1_a	: out	STD_LOGIC_VECTOR (31 downto 0);
 		 Result2_a	: out	STD_LOGIC_VECTOR (31 downto 0);
        Done_a     : out   STD_LOGIC
-		 
 	);
     end component;
 
@@ -145,7 +141,7 @@ architecture beh_complexop of complexop is
     signal done_div: std_logic := '0';
     signal debug_s : std_logic_vector(27 downto 0) := X"0000000";
 begin
-	MULTIPLIER: multiply port map (Clk,Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
+	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
 	DIVIDER_part: divider port map (enable,Control,Operand1, Operand2, div_remainder, div_quotient, done_div,debug_s);
 	
 	Result1 <= mul_result1 when (Control(1)='0' and done_mul ='1')
@@ -167,8 +163,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.ALL;
 
 entity alu is
-Port (	
-		Clk			: in	STD_LOGIC;
+Port (
 		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
 		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -219,7 +214,7 @@ architecture Behavioral of alu is
     end component;
 
     component complexop
-    Port (  Clk         : in    STD_LOGIC;
+    Port (
             Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
             Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
             Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -306,7 +301,7 @@ SF: shift port map(OpCode, Input1, Input2, SOutput1, SOutput2, SFlags);
 -- arithmetics operations
 AR: arithmetic port map(OpCode, Input1, Input2, AOutput1, AOutput2, AFlags);
 -- complex operations
-CO: complexop port map(Clk, OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
+CO: complexop port map(OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
 
 -- multiplex output
 R1: multiplexer port map(X"00000000", -- reset
@@ -336,39 +331,37 @@ DB: multiplexer port map(X"00000000", -- reset
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Debug);
 
-process (Clk)
+process (OpType, Operand1, Operand2)
    variable OpRun : std_logic := '0';
 begin
-   if (Clk'event and Clk = '1') then
-      if Control(5) = '1' then -- reset
-         OpType  <= "000";
-         OpRun   := '0';
-      else
-         if OpRun = '1' then -- check long cycles running operation
-            OpRun := not OpDone;
-         end if;
-         
-         if OpRun = '0' then -- read in and do po, when no Op is running
-            OpCode <= Control(2 downto 0);
-            Input1 <= Operand1;
-            Input2 <= Operand2;
+	if Control(5) = '1' then -- reset
+		OpType  <= "000";
+		OpRun   := '0';
+	else
+		if OpRun = '1' then -- check long cycles running operation
+			OpRun := not OpDone;
+		end if;
+		
+		if OpRun = '0' then -- read in and do po, when no Op is running
+			OpCode <= Control(2 downto 0);
+			Input1 <= Operand1;
+			Input2 <= Operand2;
 
-            case (Control(4 downto 3)) is 
-              when "00" => -- logical
-                 OpType <= "001";
-              when "01" => -- shift
-                 OpType <= "010";
-              when "10" => -- arithmetics
-                 OpType <= "011";
-              when others => -- complex op
-                 OpType <= "100";
-                 OpRun  := '1';
-           end case;
-         end if;
-         
-         OpFlag <= OpRun & OpType;
-      end if;
-   end if;
+			case (Control(4 downto 3)) is 
+			  when "00" => -- logical
+				  OpType <= "001";
+			  when "01" => -- shift
+				  OpType <= "010";
+			  when "10" => -- arithmetics
+				  OpType <= "011";
+			  when others => -- complex op
+				  OpType <= "100";
+				  OpRun  := '1';
+		  end case;
+		end if;
+		
+		OpFlag <= OpRun & OpType;
+	end if;
 end process;
 
 end Behavioral;

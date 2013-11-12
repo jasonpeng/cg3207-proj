@@ -130,7 +130,6 @@ signal FWU_B : STD_LOGIC_VECTOR(1 downto 0);
 -- ALU Component --
 component ALU
 	Port (	
-		Clk			: in	STD_LOGIC;
 		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
 		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -165,7 +164,6 @@ FWU : Forwarding_Unit Port Map (
 );
 
 ALU1 : ALU Port Map (
-	Clk => '1',
 	Control => ALU_Ctrl,
 	Operand1 => ALU_Op1, 
 	Operand2 => ALU_Op2,
