@@ -32,73 +32,62 @@ USE IEEE.STD_LOGIC_ARITH.ALL;
 --use UNISIM.VComponents.all;
 
 entity Decoder is
-    Port ( 
-			  Clk : in std_logic;
-			  Reset : in std_logic;
-			  In_PC : in std_logic_vector (31 downto 0); --input PC, instruction position
-			  In_Instr : in STD_LOGIC_VECTOR(31 downto 0);
-			 
-			  write_address: in std_logic_vector(4 downto 0);
-			  WriteData1 : in  STD_LOGIC_VECTOR(31 downto 0);
-			--  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
-			  
-			  Mul_or_Div: in std_logic;									-- to detect if it is a mul or div;
-			  RegWrite_in  : in std_logic;
-			  
-			  -- Data Hazzard Detection
-			  ID_EX_MEM_READ: in std_logic;
-			  ID_EX_REG_RT: in std_logic_vector(5 downto 0);		-- ID EX Register RT
-			  ID_STALL: out std_logic;
-			  -- wb
-			  RegWrite: out std_logic;
-			  MemtoReg: out std_logic;
-			  --Mem
-			  --MEM 
-			  Branch : OUT STD_LOGIC; 
-           MemRead : OUT STD_LOGIC; 
-			  MemWrite : OUT STD_LOGIC; 
-			  --EX 
-           RegDst : OUT STD_LOGIC; 
-			  ALUop : OUT STD_LOGIC_VECTOR( 2 DOWNTO 0 ); 
-           ALUSrc : OUT STD_LOGIC; 
-           --JUMP 
-			  Jump : OUT STD_LOGIC; 
-           JumpPC : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-			 
-			  Branch_Sign_Extended: out std_logic_vector(31 downto 0);
-			  read_data_1: out std_logic_vector (31 downto 0);
-			  read_data_2: out std_logic_vector (31 downto 0);
--- Check Registers
-				Reg_S1 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S2 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S3 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S4 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S5 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			  Instr_25to21: out std_logic_vector(4 downto 0);
-			  Instr_20to16 : out std_logic_vector(4 downto 0);
-			  Instr_15to11: out std_logic_vector (4 downto 0)
-			  );
+   Port ( 
+      Clk : in std_logic;
+      Reset : in std_logic;
+      
+      IN_PCINSTR : in TYPE_PI;
+
+      IN_WBWrite : in TYPE_WB_Write;
+      
+      Mul_or_Div: in std_logic;									-- to detect if it is a mul or div;
+      
+      -- Data Hazzard Detection
+      ID_EX_MEM_READ: in std_logic;
+      ID_EX_REG_RT: in std_logic_vector(5 downto 0);		-- ID EX Register RT
+      ID_STALL: out std_logic;
+      
+      -- WB
+      OUT_WB_Stage : out TYPE_WB_Stage;
+      -- MEM
+      OUT_MEM_Stage : out TYPE_MEM_Stage;
+      -- EX
+      OUT_EX_Stage : out TYPE_EX_Stage;
+      -- JUMP
+      OUT_Jump     : out TYPE_J;
+      -- DATA
+      OUT_DATA     : out TYPE_ID_Data;
+      -- Branch
+      Branch_Sign_Extended: out std_logic_vector(31 downto 0);
+
+      -- Check Registers
+      Reg_S1 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S2 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S3 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S4 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S5 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+      Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+   );
 end Decoder;
 
 architecture Behavioral_Decoder of Decoder is
- component Control
-	port(
-		Instr: in std_logic_vector(31 downto 0);
-		RegDst: out std_logic;
-		ALUSrc:out std_logic;
-		MemtoReg: out std_logic;
-		RegWrite:out std_logic;
-		MemRead:out std_logic;
-		MemWrite:out std_logic;
-		Branch: out std_logic;
-		Jump: out std_logic;
-		ALUOp: out std_logic_vector(2 downto 0));
- end component;-- RegWrite internal signal
+   component Control
+   port(
+      Instr: in std_logic_vector(31 downto 0);
+      RegDst: out std_logic;
+      ALUSrc:out std_logic;
+      MemtoReg: out std_logic;
+      RegWrite:out std_logic;
+      MemRead:out std_logic;
+      MemWrite:out std_logic;
+      Branch: out std_logic;
+      Jump: out std_logic;
+      ALUOp: out std_logic_vector(2 downto 0));
+   end component; -- RegWrite internal signal
  
---	Registers 
+   --	Registers 
 	TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
 	signal register_array: register_file;
 	alias reg_rs: std_logic_vector(4 downto 0) is In_Instr(25 downto 21);
@@ -110,7 +99,7 @@ architecture Behavioral_Decoder of Decoder is
 	signal write_addr: std_logic_vector(4 downto 0);
 	signal imm_value : std_logic_vector (15 downto 0);
 	
--- 
+   -- 
 	SIGNAL ALUSrc_out : STD_LOGIC; 
 	SIGNAL Branch_out : STD_LOGIC; 
 	SIGNAL RegDst_out : STD_LOGIC; 
@@ -119,8 +108,9 @@ architecture Behavioral_Decoder of Decoder is
 	SIGNAL MemtoReg_out : STD_LOGIC; 
 	SIGNAL MemRead_out : STD_LOGIC; 
 	SIGNAL ALUop_out : STD_LOGIC_VECTOR( 2 DOWNTO 0 ); 
-	SIGNAL Jump_out : STD_LOGIC; 
--- for data hazzard detection 
+	SIGNAL Jump_out : STD_LOGIC;
+   
+   -- for data hazzard detection 
 	SIGNAL STALL: std_logic;
 	SIGNAL hd_stall: std_logic;
 begin
@@ -147,9 +137,6 @@ begin
 		--				else x"00000000";
 	--register_high <= writedata2 when (Mul_or_Div = '1')
 			--			else x"00000000";
-	Instr_25to21 <= In_Instr(25 downto 21);
-	Instr_20to16 <= In_Instr(20 downto 16);
-	Instr_15to11 <= In_Instr(15 downto 11);
 -- check registers;
 	Reg_S1 <= register_array(1); 
 	Reg_S2 <= register_array(2); 
