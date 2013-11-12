@@ -40,11 +40,15 @@ entity Decoder is
 			 
 			  write_address: in std_logic_vector(4 downto 0);
 			  WriteData1 : in  STD_LOGIC_VECTOR(31 downto 0);
-			  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
+			--  WriteData2: in std_logic_vector(31 downto 0);		-- in case it is a multiplication or division.
 			  
 			  Mul_or_Div: in std_logic;									-- to detect if it is a mul or div;
 			  RegWrite_in  : in std_logic;
-			  			  	  
+			  
+			  -- Data Hazzard Detection
+			  ID_EX_MEM_READ: in std_logic;
+			  ID_EX_REG_RT: in std_logic_vector(5 downto 0);		-- ID EX Register RT
+			  ID_STALL: out std_logic;
 			  -- wb
 			  RegWrite: out std_logic;
 			  MemtoReg: out std_logic;
@@ -73,10 +77,9 @@ entity Decoder is
 				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-			  
+			  Instr_25to21: out std_logic_vector(4 downto 0);
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
-			  Instr_15to11: out std_logic_vector (4 downto 0);
-			  Instr_10to6: out std_logic_vector(4 downto 0)
+			  Instr_15to11: out std_logic_vector (4 downto 0)
 			  );
 end Decoder;
 
@@ -98,6 +101,8 @@ architecture Behavioral_Decoder of Decoder is
 --	Registers 
 	TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
 	signal register_array: register_file;
+	alias reg_rs: std_logic_vector(4 downto 0) is In_Instr(25 downto 21);
+	alias reg_rt: std_logic_vector(4 downto 0) is In_Instr(20 downto 16);
 	signal register_low: std_logic_vector(31 downto 0);
 	signal register_high: std_logic_vector(31 downto 0);
 	signal read_addr1: std_logic_vector(4 downto 0);
@@ -105,6 +110,7 @@ architecture Behavioral_Decoder of Decoder is
 	signal write_addr: std_logic_vector(4 downto 0);
 	signal imm_value : std_logic_vector (15 downto 0);
 	
+-- 
 	SIGNAL ALUSrc_out : STD_LOGIC; 
 	SIGNAL Branch_out : STD_LOGIC; 
 	SIGNAL RegDst_out : STD_LOGIC; 
@@ -114,15 +120,16 @@ architecture Behavioral_Decoder of Decoder is
 	SIGNAL MemRead_out : STD_LOGIC; 
 	SIGNAL ALUop_out : STD_LOGIC_VECTOR( 2 DOWNTO 0 ); 
 	SIGNAL Jump_out : STD_LOGIC; 
-
+-- for data hazzard detection 
+	SIGNAL STALL: std_logic;
+	SIGNAL hd_stall: std_logic;
 begin
 
 	read_addr1 <= In_Instr(25 downto 21);
 	read_addr2 <= In_Instr(20 downto 16);
 	imm_value <= In_Instr(15 downto 0);
 	-- Read Register 1 Operation
-	read_data_1 <= register_array(CONV_INTEGER(read_addr1));
-	read_data_2 <= register_array(CONV_INTEGER(read_addr2));
+	
 
 	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
@@ -136,22 +143,13 @@ begin
 																				else register_low when (In_Instr(31 downto 26) ="000000" and In_Instr(5 downto 0) = "010010")	-- case mvlo
 																				else register_high when (In_Instr(31 downto 26) = "000000" and In_Instr(5 downto 0) = "010000"); -- case mvhi
 	
-	register_low <= writedata1 when (Mul_or_Div = '1')
-						else x"00000000";
-	register_high <= writedata2 when (Mul_or_Div = '1')
-						else x"00000000";
-	Jump <= Jump_out; 
-	RegDst <= RegDst_out; 
-	ALUSrc <= ALUSrc_out; 
-	MemtoReg <= MemtoReg_out; 
-	RegWrite <= RegWrite_out; 
-	MemRead <= MemRead_out; 
-	MemWrite <= MemWrite_out;
-	Branch <= Branch_out;
-	ALUOp <= ALUOp_out;
+	--register_low <= writedata1 when (Mul_or_Div = '1')
+		--				else x"00000000";
+	--register_high <= writedata2 when (Mul_or_Div = '1')
+			--			else x"00000000";
+	Instr_25to21 <= In_Instr(25 downto 21);
 	Instr_20to16 <= In_Instr(20 downto 16);
 	Instr_15to11 <= In_Instr(15 downto 11);
-	Instr_10to6 <= In_Instr(10 downto 6);
 -- check registers;
 	Reg_S1 <= register_array(1); 
 	Reg_S2 <= register_array(2); 
@@ -161,8 +159,13 @@ begin
 	Reg_S6 <= register_array(6); 
 	Reg_S7 <= register_array(7); 	
 	Reg_S8 <= register_array(8);
-	
-	
+
+-- Data hazzard detection
+	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
+							((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
+						else '0';
+	ID_STALL <= hd_stall; 
+	STALL <= hd_stall;
 	ctrl: control port map
 		(
 				Instr => In_Instr,
@@ -176,16 +179,55 @@ begin
 				Jump => Jump_out,
 				ALUOp => ALUOp_out);
 	
-	process (Clk,Reset)
+rf:process (Clk)
 	begin
-		if(Clk'event and Clk = '1') then
-			if (Reset = '1') then
-				for i in 0 to 31 loop
-					register_array(i) <= CONV_STD_LOGIC_VECTOR('0',32);
-				end loop;
-			elsif (RegWrite_in = '1' and write_address /= 0 )then
+		if (Clk'event and Clk = '1') then		
+			if(RegWrite_in = '1' and write_address /= 0 )then
 				register_array(conv_integer(write_address)) <= Writedata1;
 			end if;
+		elsif(Clk'event and Clk = '0') then
+			read_data_1 <= register_array(CONV_INTEGER(read_addr1));
+			--read_data_2 <= register_array(CONV_INTEGER(read_addr2));
+		end if;
+	end process;
+	
+pipeline: process (Clk,Reset)
+	begin
+		if Reset = '1' then
+			  RegWrite <= '0';
+			  MemtoReg <= '0';
+			  Branch <= '0';
+           MemRead <='0'; 
+			  MemWrite <='0'; 
+           RegDst <='0'; 
+			  ALUop <="000"; 
+           ALUSrc <='0'; 
+			  Jump <='0';
+		elsif rising_edge (Clk) then
+				if (Stall = '0') then
+					Jump <= Jump_out; 
+					RegDst <= RegDst_out; 
+					ALUSrc <= ALUSrc_out; 
+					MemtoReg <= MemtoReg_out; 
+					RegWrite <= RegWrite_out; 
+					MemRead <= MemRead_out; 
+					MemWrite <= MemWrite_out;
+					Branch <= Branch_out;
+					ALUOp <= ALUOp_out;
+				end if;
+				
+				if (hd_stall = '1') then
+				-- if pipeline is stalled by hazzard detection, insert nop
+				  RegWrite <= '0';
+				  MemtoReg <= '0';
+				  Branch <= '0';
+				  MemRead <='0'; 
+				  MemWrite <='0'; 
+				  RegDst <='0'; 
+				  ALUop <="000"; 
+				  ALUSrc <='0'; 
+				  Jump <='0'; 
+				end if;
 		end if;
 	end process;
 end Behavioral_Decoder;

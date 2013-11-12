@@ -34,6 +34,7 @@ entity Fetch is
     PORT( 
 		clk: in std_logic;
 		reset: in std_logic;
+		In_stall_if: in std_logic;
 		
 		Instruction : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 		PC_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
@@ -43,7 +44,9 @@ entity Fetch is
 		BEQ_PC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 		PCSrc : IN STD_LOGIC; 
 		Jump : IN STD_LOGIC; 
-		JumpPC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 )	-- JUmp address
+		JumpPC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 );	-- JUmp address
+		IF_ID_Flush: out std_logic
+		
  ); 
 end Fetch;
 
@@ -70,13 +73,13 @@ instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
 		PC_out <= incPC;
 		read_addr <= "00"&PC(31 downto 2);
 		PC_out_4 <= read_addr;
+		IF_ID_Flush <='1' when Jump = '1'; 
 	process (Clk,Reset)
 	begin
-		if(Clk'event and Clk = '1') then
-			if (Reset = '1') then
+		if (Reset = '1') then 
 				PC <= X"00000000"; -- currently start from 0 for test
-				Instruction <= (others =>'Z');
-			else
+		elsif rising_edge (Clk) then
+			if(In_stall_if = '0') then	
 				PC <= nextPC;
 			end if;
 		end if;

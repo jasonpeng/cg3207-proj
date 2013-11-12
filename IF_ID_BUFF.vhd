@@ -28,7 +28,7 @@ entity IF_ID_REG is
 	 PC_ADDR_IN: in STD_LOGIC_VECTOR(31 downto 0); 
 	 INST_REG_IN : in STD_LOGIC_VECTOR(31 downto 0); 
 	 PC_ADDR_OUT : out STD_LOGIC_VECTOR(31 downto 0); 
-	 INST_REG_OUT : out STD_LOGIC_VECTOR(31 downto 0) 
+	 INST_REG_OUT : out STD_LOGIC_VECTOR(31 downto 0)
 	 ); 
 end IF_ID_REG; 
 
@@ -40,6 +40,7 @@ begin
 	 if RESET = '1' then 
 	  PC_ADDR_OUT <= (others => '0'); 
 	  INST_REG_OUT <= (others => '0'); 
+	  Reset <= '0';
 	 elsif rising_edge(CLK) then 
 	  PC_ADDR_OUT <= PC_ADDR_IN; 
 	  INST_REG_OUT <= INST_REG_IN; 
