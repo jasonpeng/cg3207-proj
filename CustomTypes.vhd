@@ -3,11 +3,12 @@ use IEEE.STD_LOGIC_1164.all;
 
 package CUSTOM_TYPES is
     -- 32 bits
+    subtype SL     is std_logic;
     subtype SLV_32 is std_logic_vector(31 downto 0);
     subtype SLV_6  is std_logic_vector( 5 downto 0);
     subtype SLV_4  is std_logic_vector( 4 downto 0);
-    type R32 is range 31 downto 0;
     -- R-type
+    type R32    is range 31 downto 0;
     type Op     is range 31 downto 26;
     type Rs     is range 25 downto 21;
     type Rt     is range 20 downto 16;
@@ -19,32 +20,32 @@ package CUSTOM_TYPES is
     -- J-type
     type Target is range 25 downto 0;
 
-    type PCINSTR is
+    type TYPE_PI is
         record
             PC    : SLV_32;
             Instr : SLV_32;
         end record;
 
-    type JUMP is
+    type TYPE_J is
         record
             Jump      : std_logic;
             JumpPC    : SLV_32;
         end record;
 
-    type ID_DATA is
+    type TYPE_ID_DATA is
         record
             Data_1 : SLV_32;
             Data_2 : SLV_32;
         end record;
 
-    type EX_Stage is
+    type TYPE_EX_Stage is
         record
             RegDst : std_logic;
             ALUOp  : std_logic_vector(2 downto 0);
             ALUSrc : std_logic;
         end record;
 
-    type ALU_Data is
+    type TYPE_ALU_Data is
         record
             OVF    : std_logic;
             Zero   : std_logic;
@@ -53,26 +54,26 @@ package CUSTOM_TYPES is
             MULDIV : std_logic;
         end record;
 
-    type MEM_Stage is
+    type TYPE_MEM_Stage is
         record
             Branch   : std_logic;
             MemRead  : std_logic;
             MemWrite : std_logic;
         end record;
 
-    type MEM_Control is
+    type TYPE_MEM_Control is
         record
             MemRead  : std_logic;
             MemWrite : std_logic;
         end record;
 
-    type WB_Stage is
+    type TYPE_WB_Stage is
         record
             RegWrite  : std_logic;
             MemToReg  : std_logic;
         end record;
 
-    type WB_Write is
+    type TYPE_WB_Write is
         record
             RegAddr   : std_logic;
             RegWrite  : std_logic;
