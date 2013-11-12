@@ -36,27 +36,24 @@ entity EX_MEM_BUFF is
 			  
 			  -- states received from EX
 			  -- state registers
-			  IN_MEM_MemWrite : in STD_LOGIC;
-			  IN_MEM_MemToReg : in STD_LOGIC;
-			  IN_MEM_MemRead : in STD_LOGIC;
-			  IN_MEM_Branch : in STD_LOGIC;
-           IN_MEM_RegWrite : in STD_LOGIC;
+			  IN_EX_MemWrite : in STD_LOGIC;
+			  IN_EX_MemToReg : in STD_LOGIC;
+			  IN_EX_MemRead : in STD_LOGIC;
+           IN_EX_RegWrite : in STD_LOGIC;
 						  
 			  -- alu related
-			  IN_MEM_OVF : in STD_LOGIC;
-           IN_MEM_Zero : in STD_LOGIC;
-           IN_MEM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
-			  IN_MEM_ALU_Result_2 : in STD_LOGIC_VECTOR(31 downto 0);
-			  IN_MEM_MUL_DIV : in STD_LOGIC;
+			  IN_EX_OVF : in STD_LOGIC;
+           IN_EX_Zero : in STD_LOGIC;
+           IN_EX_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
+			  IN_EX_ALU_Result_2 : in STD_LOGIC_VECTOR(31 downto 0);
+			  IN_EX_MULDIV : in STD_LOGIC;
 			  
-			  IN_MEM_BEQ_Addr : in STD_LOGIC_VECTOR(31 downto 0); -- computed BEQ address
-			  IN_MEM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for DM Write Data
-			  IN_MEM_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
+			  IN_EX_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for DM Write Data
+			  IN_EX_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
            
 			  OUT_MEM_MemWrite : out STD_LOGIC;
 			  OUT_MEM_MemToReg : out STD_LOGIC;
 			  OUT_MEM_MemRead : out STD_LOGIC;
-			  OUT_MEM_Branch : out STD_LOGIC;
 			  OUT_MEM_RegWrite : out STD_LOGIC;
 			  
 			  -- alu related
@@ -64,9 +61,8 @@ entity EX_MEM_BUFF is
            OUT_MEM_Zero : out STD_LOGIC;
            OUT_MEM_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
 			  OUT_MEM_ALU_Result_2 : out STD_LOGIC_VECTOR(31 downto 0);
-			  OUT_MEM_MUL_DIV : out STD_LOGIC;
+			  OUT_MEM_MULDIV : out STD_LOGIC;
 			  
-			  OUT_MEM_BEQ_Addr : out STD_LOGIC_VECTOR(31 downto 0); -- computed BEQ address
 			  OUT_MEM_Data2 : out STD_LOGIC_VECTOR(31 downto 0); -- for DM Write Data
 			  OUT_MEM_REG_WriteAddr : out STD_LOGIC_VECTOR(4 downto 0) -- register address
 			  );
@@ -76,42 +72,38 @@ architecture Behavioral of EX_MEM_BUFF is
 begin
 
 process(CLK, RESET, 
-	IN_MEM_MemWrite, IN_MEM_MemToReg, IN_MEM_MemRead, IN_MEM_Branch, 
-	IN_MEM_OVF, IN_MEM_Zero, IN_MEM_ALU_Result,
-	IN_MEM_BEQ_Addr, IN_MEM_Data2, IN_MEM_REG_WriteAddr)
+	IN_EX_MemWrite, IN_EX_MemToReg, IN_EX_MemRead, 
+	IN_EX_OVF, IN_EX_Zero, IN_EX_ALU_Result,
+	IN_EX_Data2, IN_EX_REG_WriteAddr)
 begin
 	if (RESET = '1') then
 	  OUT_MEM_MemWrite	<=		'0';
 	  OUT_MEM_MemToReg	<=		'0';
 	  OUT_MEM_MemRead		<=		'0';
-	  OUT_MEM_Branch		<=		'0';
 	  OUT_MEM_RegWrite	<= 	'0';
 	  
 	  OUT_MEM_OVF 			<=		'0';
 	  OUT_MEM_Zero			<=		'0';
 	  OUT_MEM_ALU_Result <=		(others => '0');
 	  OUT_MEM_ALU_Result_2 <=	(others => '0');
-	  OUT_MEM_MUL_DIV		<=		'0';
+	  OUT_MEM_MULDIV		<=		'0';
 	  
-	  OUT_MEM_BEQ_Addr 	<=		(others => '0');
 	  OUT_MEM_Data2		<=		(others => '0');
 	  OUT_MEM_REG_WriteAddr <=	(others => '0');
 	elsif rising_edge(CLK) then
-	  OUT_MEM_MemWrite	<=		IN_MEM_MemWrite;
-	  OUT_MEM_MemToReg	<=		IN_MEM_MemToReg;
-	  OUT_MEM_MemRead		<=		IN_MEM_MemRead;
-	  OUT_MEM_Branch		<=		IN_MEM_Branch;
-     OUT_MEM_RegWrite	<=		IN_MEM_RegWrite;
+	  OUT_MEM_MemWrite	<=		IN_EX_MemWrite;
+	  OUT_MEM_MemToReg	<=		IN_EX_MemToReg;
+	  OUT_MEM_MemRead		<=		IN_EX_MemRead;
+     OUT_MEM_RegWrite	<=		IN_EX_RegWrite;
 	  
-	  OUT_MEM_OVF 			<=		IN_MEM_OVF;
-	  OUT_MEM_Zero			<=		IN_MEM_Zero;
-	  OUT_MEM_ALU_Result <=		IN_MEM_ALU_Result;
-	  OUT_MEM_ALU_Result_2 <=	IN_MEM_ALU_Result_2;
-	  OUT_MEM_MUL_DIV		<=		IN_MEM_MUL_DIV;
+	  OUT_MEM_OVF 			<=		IN_EX_OVF;
+	  OUT_MEM_Zero			<=		IN_EX_Zero;
+	  OUT_MEM_ALU_Result <=		IN_EX_ALU_Result;
+	  OUT_MEM_ALU_Result_2 <=	IN_EX_ALU_Result_2;
+	  OUT_MEM_MULDIV		<=		IN_EX_MULDIV;
 	  
-	  OUT_MEM_BEQ_Addr 	<=		IN_MEM_BEQ_Addr;
-	  OUT_MEM_Data2		<=		IN_MEM_Data2;
-	  OUT_MEM_REG_WriteAddr <=	IN_MEM_REG_WriteAddr;
+	  OUT_MEM_Data2		<=		IN_EX_Data2;
+	  OUT_MEM_REG_WriteAddr <=	IN_EX_REG_WriteAddr;
 	end if;
 	
 end process;
