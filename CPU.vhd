@@ -48,16 +48,14 @@ component Fetch
 end component;
 
 -- IF_ID_BUFF
-component IF_ID_REG
-    port( 
-        Clk          : in STD_LOGIC;
-        Reset        : in STD_LOGIC;
-        PC_ADDR_IN   : in STD_LOGIC_VECTOR(31 downto 0);
-        INST_REG_IN  : in STD_LOGIC_VECTOR(31 downto 0);
-        PC_ADDR_OUT  : out STD_LOGIC_VECTOR(31 downto 0);
-        INST_REG_OUT : out STD_LOGIC_VECTOR(31 downto 0)
-    ); 
-end component; 
+component IF_ID_BUFF
+	 port( 
+       Clk         : in STD_LOGIC; 
+       Reset       : in STD_LOGIC; 
+       IN_PCINSTR  : in TYPE_PI;
+       OUT_PCINSTR : in TYPE_PI
+	 );
+end component;
 
 -- IDecode
 component Decoder
@@ -401,7 +399,7 @@ IFF: Fetch Port MAP (
     );
 
 -- IF_ID_BUFF
-IFID: IF_ID_REG Port MAP ( 
+IFID: IF_ID_BUFF Port MAP ( 
         Clk            => Clk,
         Reset          => Reset,
 

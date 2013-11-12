@@ -1,25 +1,8 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    18:51:54 10/29/2013 
--- Design Name: 
--- Module Name:    InstructionMemory - Behavioral_InstructionMemory 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use CUSTOM_TYPES.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -32,58 +15,57 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity Fetch is
     PORT( 
-		clk: in std_logic;
-		reset: in std_logic;
-		In_stall_if: in std_logic;
-		
-		Instruction : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		PC_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		--PC_plus_4_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		--ADD_out : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 			-- to be defined
-		PC_out_4: out std_logic_vector(31 downto 0);
-		BEQ_PC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
-		PCSrc : IN STD_LOGIC; 
-		Jump : IN STD_LOGIC; 
-		JumpPC : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 );	-- JUmp address
-		IF_ID_Flush: out std_logic
-		
+		Clk         : in std_logic;
+		Reset       : in std_logic;
+		In_stall_if : in std_logic;
+		BEQ_PC      : IN STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+		PCSrc       : IN STD_LOGIC;
+      IN_Jump     : in TYPE_Jump;
+      
+      OUT_PI      : out TYPE_PI;
+      PC_out_4    : out std_logic_vector(31 downto 0);
+		IF_ID_Flush : out std_logic
  ); 
 end Fetch;
 
 architecture Behavioral of Fetch is
 	component ram_instr 
 		port (      
-      ADDR : in std_logic_vector(31 downto 0);
-      DATA : out std_logic_vector(31 downto 0));
+         ADDR : in std_logic_vector(31 downto 0);
+         DATA : out std_logic_vector(31 downto 0)
+      );
 	end component;
-
 		
-		signal PC: std_logic_vector (31 downto 0); -- fetched instruction
-		signal nextPC: std_logic_vector(31 downto 0); -- Next PC
-		signal read_addr: std_logic_vector(31 downto 0);
-		signal IncPC: std_logic_vector (31 downto 0); -- PC + 4
+   signal PC: std_logic_vector (31 downto 0); -- fetched instruction
+   signal nextPC: std_logic_vector(31 downto 0); -- Next PC
+   signal read_addr: std_logic_vector(31 downto 0);
+   signal IncPC: std_logic_vector (31 downto 0); -- PC + 4
 begin
 	
-instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
+instr_mem: ram_instr port map (ADDR => read_addr, DATA => OUT_PI.Instr);
+
 -- multiplex next PC
-		nextPC <= JumpPC when (Jump = '1') 
-				else BEQ_PC when (PCSrc = '1')
-				else incPC;
-		incPC <= PC + X"00000004";			-- incPC = PC +4 ;
-		PC_out <= incPC;
-		read_addr <= "00"&PC(31 downto 2);
-		PC_out_4 <= read_addr;
-		IF_ID_Flush <='1' when Jump = '1'; 
-	process (Clk,Reset)
-	begin
-		if (Reset = '1') then 
-				PC <= X"00000000"; -- currently start from 0 for test
-		elsif rising_edge (Clk) then
-			if(In_stall_if = '0') then	
-				PC <= nextPC;
-			end if;
-		end if;
-	end process;
+nextPC <= IN_Jump.PC when (IN_Jump.EN = '1') 
+         else BEQ_PC when (PCSrc = '1')
+         else incPC;
+incPC <= PC + X"00000004";			-- incPC = PC +4 ;
+OUT_PI.PC <= incPC;
+read_addr <= "00" & PC(31 downto 2);
+PC_out_4 <= read_addr;
+IF_ID_Flush <= '1' when IN_Jump.EN = '1'
+               else '0'; 
+      
+process (Clk,Reset)
+begin
+   if (Reset = '1') then 
+      PC <= X"00000000"; -- currently start from 0 for test
+   elsif rising_edge (Clk) then
+      if(In_stall_if = '0') then	
+         PC <= nextPC;
+      end if;
+   end if;
+end process;
+   
 end Behavioral;
 
 --------------------------------------------------------------------------
