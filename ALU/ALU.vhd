@@ -36,53 +36,12 @@ OPT <= I0 when "000",
 end beh_multiplexer;
 
 --------------------------------------------------------------------------
--- Comparator
---------------------------------------------------------------------------
--- Input the result of SUB
---------------------------------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
-
-entity comparator is
-Port (  Input	: in	STD_LOGIC_VECTOR (31 downto 0);
-        Larger  : out   STD_LOGIC;
-        Equal   : out   STD_LOGIC;
-        Smaller : out   STD_LOGIC );
-end comparator;
-
-architecture beh_comparator of comparator is
-    signal ORInput : STD_LOGIC;
-begin
-
-process (Input)
-    variable TMP : STD_LOGIC;
-begin
-    TMP := '0';
-    
-    for I in 0 to 31 loop
-        TMP := TMP or Input(I);
-    end loop;
-    
-    ORInput <= TMP;
-end process;
-
-Larger  <= (not Input(31)) and ORInput;
-Equal   <= not ORInput;
-Smaller <= Input(31);
-
-end beh_comparator;
-
---------------------------------------------------------------------------
 -- Arithmetic
 --------------------------------------------------------------------------
 -- 0,10,000 ADD
 -- 0,10,001 ADDU
 -- 0,10,010 SUB
 -- 0,10,011 SUBU
--- 0,10,100 BEQ (equality check only)
--- 0,10,101 BNE (inequality check only)
 -- 0,10,110 SLT (set less than)
 --------------------------------------------------------------------------
 library ieee;
@@ -108,29 +67,15 @@ architecture beh_arithmetic of arithmetic is
             Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
             Debug		: out	STD_LOGIC_VECTOR (27 downto 0));
     end component;
-    
-    component comparator
-    Port (  Input	: in	STD_LOGIC_VECTOR (31 downto 0);
-            Larger  : out   STD_LOGIC;
-            Equal   : out   STD_LOGIC;
-            Smaller : out   STD_LOGIC );
-    end component;
-    
+   
     signal Output1 : STD_LOGIC_VECTOR (31 downto 0);
     signal Output2 : STD_LOGIC_VECTOR (31 downto 0);
     signal Oflags  : STD_LOGIC_VECTOR (27 downto 0);
-    signal Osmaller: STD_LOGIC;
-    signal Oequal  : STD_LOGIC;
-    signal Olarger : STD_LOGIC;
 begin
 
 ADDSUB: addsub_lookahead port map (Control, Operand1, Operand2, Output1, Output2, Oflags);
-CP: comparator port map (Output1, Olarger, Oequal, Osmaller);
 
-Result1 <= Output1 when Control(2) = '0' else
-           X"0000000" + "000" + Oequal when Control = "100" else
-           X"0000000" + "000" + (not Oequal) when Control = "101" else
-           X"0000000" + "000" + Osmaller;
+Result1 <= Output1;
            
 Result2 <= Output2 when Control(2) = '0' else X"00000000";
 
@@ -152,29 +97,25 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.ALL;
 
 entity complexop is
-Port (  Clk         : in    STD_LOGIC;
-			Enable: in std_logic;
-
-        Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
+Port (Enable: in std_logic;
+      Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
 		Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
 		Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
-        Done        : out   STD_LOGIC);
+      Done        : out   STD_LOGIC);
 end complexop;
 
 architecture beh_complexop of complexop is
 	component Multiply is
 	port(
-		 Clk_a      : in    STD_LOGIC;
        Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Result1_a	: out	STD_LOGIC_VECTOR (31 downto 0);
 		 Result2_a	: out	STD_LOGIC_VECTOR (31 downto 0);
        Done_a     : out   STD_LOGIC
-		 
 	);
     end component;
 
@@ -200,7 +141,7 @@ architecture beh_complexop of complexop is
     signal done_div: std_logic := '0';
     signal debug_s : std_logic_vector(27 downto 0) := X"0000000";
 begin
-	MULTIPLIER: multiply port map (Clk,Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
+	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
 	DIVIDER_part: divider port map (enable,Control,Operand1, Operand2, div_remainder, div_quotient, done_div,debug_s);
 	
 	Result1 <= mul_result1 when (Control(1)='0' and done_mul ='1')
@@ -222,8 +163,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.ALL;
 
 entity alu is
-Port (	
-		Clk			: in	STD_LOGIC;
+Port (
 		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
 		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -274,7 +214,7 @@ architecture Behavioral of alu is
     end component;
 
     component complexop
-    Port (  Clk         : in    STD_LOGIC;
+    Port (
             Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
             Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
             Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -361,7 +301,7 @@ SF: shift port map(OpCode, Input1, Input2, SOutput1, SOutput2, SFlags);
 -- arithmetics operations
 AR: arithmetic port map(OpCode, Input1, Input2, AOutput1, AOutput2, AFlags);
 -- complex operations
-CO: complexop port map(Clk, OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
+CO: complexop port map(OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
 
 -- multiplex output
 R1: multiplexer port map(X"00000000", -- reset
@@ -391,39 +331,37 @@ DB: multiplexer port map(X"00000000", -- reset
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Debug);
 
-process (Clk)
+process (OpType, Operand1, Operand2)
    variable OpRun : std_logic := '0';
 begin
-   if (Clk'event and Clk = '1') then
-      if Control(5) = '1' then -- reset
-         OpType  <= "000";
-         OpRun   := '0';
-      else
-         if OpRun = '1' then -- check long cycles running operation
-            OpRun := not OpDone;
-         end if;
-         
-         if OpRun = '0' then -- read in and do po, when no Op is running
-            OpCode <= Control(2 downto 0);
-            Input1 <= Operand1;
-            Input2 <= Operand2;
+	if Control(5) = '1' then -- reset
+		OpType  <= "000";
+		OpRun   := '0';
+	else
+		if OpRun = '1' then -- check long cycles running operation
+			OpRun := not OpDone;
+		end if;
+		
+		if OpRun = '0' then -- read in and do po, when no Op is running
+			OpCode <= Control(2 downto 0);
+			Input1 <= Operand1;
+			Input2 <= Operand2;
 
-            case (Control(4 downto 3)) is 
-              when "00" => -- logical
-                 OpType <= "001";
-              when "01" => -- shift
-                 OpType <= "010";
-              when "10" => -- arithmetics
-                 OpType <= "011";
-              when others => -- complex op
-                 OpType <= "100";
-                 OpRun  := '1';
-           end case;
-         end if;
-         
-         OpFlag <= OpRun & OpType;
-      end if;
-   end if;
+			case (Control(4 downto 3)) is 
+			  when "00" => -- logical
+				  OpType <= "001";
+			  when "01" => -- shift
+				  OpType <= "010";
+			  when "10" => -- arithmetics
+				  OpType <= "011";
+			  when others => -- complex op
+				  OpType <= "100";
+				  OpRun  := '1';
+		  end case;
+		end if;
+		
+		OpFlag <= OpRun & OpType;
+	end if;
 end process;
 
 end Behavioral;

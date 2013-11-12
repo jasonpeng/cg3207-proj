@@ -24,7 +24,6 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 entity Multiply is
 	port(
-		 Clk_a         : in    STD_LOGIC;
        Control_a		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
 		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -52,20 +51,7 @@ process(Operand1_a,Operand2_a,Control_a)
 		end if;
 		tmp:= a_in*b_in;
 		prod <= tmp;
+		Result2_a <= prod(63 downto 32);
+		Result1_a <= prod(31 downto 0);
 	end process;
-
-process(Clk_a)
-begin
-	if(Clk_a'event and Clk_a ='1') then
-    if Count = X"00" then
-        Done_a  <= '1';
-			Result2_a <= prod(63 downto 32);
-			Result1_a <= prod(31 downto 0);
-			Count <= X"04";
-    else
-        Done_a  <= '0';
-        Count <= Count - 1;
-    end if;
-	end if;
-end process;
 end beh;

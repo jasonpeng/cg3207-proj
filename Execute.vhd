@@ -83,7 +83,6 @@ entity Execute is
 		IN_ID_EX_Instr_25_21 : in STD_LOGIC_VECTOR(4 downto 0);
 		IN_ID_EX_Instr_20_16 : in STD_LOGIC_VECTOR(4 downto 0);
 		IN_ID_EX_Instr_15_11 : in STD_LOGIC_VECTOR(4 downto 0);
-		IN_ID_EX_Instr_10_6  : in STD_LOGIC_VECTOR(4 downto 0);
 
 		-- forward unit 
 		IN_EX_MM_RegWrite : in STD_LOGIC;
@@ -130,7 +129,6 @@ signal FWU_B : STD_LOGIC_VECTOR(1 downto 0);
 -- ALU Component --
 component ALU
 	Port (	
-		Clk			: in	STD_LOGIC;
 		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
 		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -165,7 +163,6 @@ FWU : Forwarding_Unit Port Map (
 );
 
 ALU1 : ALU Port Map (
-	Clk => '1',
 	Control => ALU_Ctrl,
 	Operand1 => ALU_Op1, 
 	Operand2 => ALU_Op2,
@@ -185,7 +182,6 @@ process(IN_ID_EX_ALUOp,
 		IN_ID_EX_Instr_25_21,
 		IN_ID_EX_Instr_20_16,
 		IN_ID_EX_Instr_15_11,
-		IN_ID_EX_Instr_10_6,
 
 		IN_EX_MM_RegWrite,
 		IN_EX_MM_RD,
@@ -223,7 +219,7 @@ begin
 	-- set ALU Op1 and Op2
 	ALU_Op1 <= A;
 	ALU_Op2 <= B;
-	shftamt := X"000000" & "000" & IN_ID_EX_Instr_10_6;
+	shftamt := X"000000" & "000" & IN_ID_EX_SignExtended(10 downto 6);
 	
 	-- mux for ALUOp
 	case IN_ID_EX_ALUOp is
