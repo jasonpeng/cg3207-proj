@@ -36,53 +36,12 @@ OPT <= I0 when "000",
 end beh_multiplexer;
 
 --------------------------------------------------------------------------
--- Comparator
---------------------------------------------------------------------------
--- Input the result of SUB
---------------------------------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
-
-entity comparator is
-Port (  Input	: in	STD_LOGIC_VECTOR (31 downto 0);
-        Larger  : out   STD_LOGIC;
-        Equal   : out   STD_LOGIC;
-        Smaller : out   STD_LOGIC );
-end comparator;
-
-architecture beh_comparator of comparator is
-    signal ORInput : STD_LOGIC;
-begin
-
-process (Input)
-    variable TMP : STD_LOGIC;
-begin
-    TMP := '0';
-    
-    for I in 0 to 31 loop
-        TMP := TMP or Input(I);
-    end loop;
-    
-    ORInput <= TMP;
-end process;
-
-Larger  <= (not Input(31)) and ORInput;
-Equal   <= not ORInput;
-Smaller <= Input(31);
-
-end beh_comparator;
-
---------------------------------------------------------------------------
 -- Arithmetic
 --------------------------------------------------------------------------
 -- 0,10,000 ADD
 -- 0,10,001 ADDU
 -- 0,10,010 SUB
 -- 0,10,011 SUBU
--- 0,10,100 BEQ (equality check only)
--- 0,10,101 BNE (inequality check only)
 -- 0,10,110 SLT (set less than)
 --------------------------------------------------------------------------
 library ieee;
@@ -108,29 +67,15 @@ architecture beh_arithmetic of arithmetic is
             Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
             Debug		: out	STD_LOGIC_VECTOR (27 downto 0));
     end component;
-    
-    component comparator
-    Port (  Input	: in	STD_LOGIC_VECTOR (31 downto 0);
-            Larger  : out   STD_LOGIC;
-            Equal   : out   STD_LOGIC;
-            Smaller : out   STD_LOGIC );
-    end component;
-    
+   
     signal Output1 : STD_LOGIC_VECTOR (31 downto 0);
     signal Output2 : STD_LOGIC_VECTOR (31 downto 0);
     signal Oflags  : STD_LOGIC_VECTOR (27 downto 0);
-    signal Osmaller: STD_LOGIC;
-    signal Oequal  : STD_LOGIC;
-    signal Olarger : STD_LOGIC;
 begin
 
 ADDSUB: addsub_lookahead port map (Control, Operand1, Operand2, Output1, Output2, Oflags);
-CP: comparator port map (Output1, Olarger, Oequal, Osmaller);
 
-Result1 <= Output1 when Control(2) = '0' else
-           X"0000000" + "000" + Oequal when Control = "100" else
-           X"0000000" + "000" + (not Oequal) when Control = "101" else
-           X"0000000" + "000" + Osmaller;
+Result1 <= Output1;
            
 Result2 <= Output2 when Control(2) = '0' else X"00000000";
 
