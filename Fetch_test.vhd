@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   19:34:35 10/31/2013
+-- Create Date:   05:33:07 11/13/2013
 -- Design Name:   
--- Module Name:   C:/Documents and Settings/Administrator/My Documents/Dropbox/CG3207/Lab3 Code/if_test.vhd
+-- Module Name:   D:/Programming/gitHub/cg3207-proj/IF_test.vhd
 -- Project Name:  Lab3
 -- Target Device:  
 -- Tool versions:  
@@ -43,20 +43,22 @@ ARCHITECTURE behavior OF if_test IS
     PORT(
          clk : IN  std_logic;
          reset : IN  std_logic;
+         In_stall_if : IN  std_logic;
          Instruction : OUT  std_logic_vector(31 downto 0);
          PC_out : OUT  std_logic_vector(31 downto 0);
-			PC_out_4: out std_logic_vector(31 downto 0);
+         PC_out_4 : OUT  std_logic_vector(31 downto 0);
          BEQ_PC : IN  std_logic_vector(31 downto 0);
          PCSrc : IN  std_logic;
          Jump : IN  std_logic;
-         JumpPC : IN  std_logic_vector(31 downto 0)
+         JumpPC : IN  std_logic_vector(31 downto 0);
+         IF_ID_Flush : OUT  std_logic
         );
     END COMPONENT;
-    
 
    --Inputs
    signal clk : std_logic := '0';
    signal reset : std_logic := '0';
+   signal In_stall_if : std_logic := '0';
    signal BEQ_PC : std_logic_vector(31 downto 0) := (others => '0');
    signal PCSrc : std_logic := '0';
    signal Jump : std_logic := '0';
@@ -65,7 +67,9 @@ ARCHITECTURE behavior OF if_test IS
  	--Outputs
    signal Instruction : std_logic_vector(31 downto 0);
    signal PC_out : std_logic_vector(31 downto 0);
-	signal PC_out_4: std_logic_vector(31 downto 0);
+   signal PC_out_4 : std_logic_vector(31 downto 0);
+   signal IF_ID_Flush : std_logic;
+
    -- Clock period definitions
    constant clk_period : time := 100 ns;
  
@@ -75,72 +79,81 @@ BEGIN
    uut: Fetch PORT MAP (
           clk => clk,
           reset => reset,
+          In_stall_if => In_stall_if,
           Instruction => Instruction,
           PC_out => PC_out,
-			 PC_out_4 => PC_out_4,
+          PC_out_4 => PC_out_4,
           BEQ_PC => BEQ_PC,
           PCSrc => PCSrc,
           Jump => Jump,
-          JumpPC => JumpPC
+          JumpPC => JumpPC,
+          IF_ID_Flush => IF_ID_Flush
         );
 
    -- Clock process definitions
    clk_process :process
    begin
-		clk <= '0';
-		wait for clk_period/2;
-		clk <= '1';
-		wait for clk_period/2;
+        clk <= '0';
+        wait for clk_period/2;
+        clk <= '1';
+        wait for clk_period/2;
    end process;
  
 
    -- Stimulus process
    stim_proc: process
-   begin		
+   begin
       -- hold reset state for 100 ns.
-      
-		wait for 100 ns;	
-		reset <= '1';
-		wait for 100 ns;
-		reset <= '0';
-		BEQ_PC <= X"00000002";
-		JUMP <= '0';
-		PCSrc <= '0';
-		JUMPpC <= X"00000004";
-		
-		wait for 100 ns;			
-		reset <= '0';
-		BEQ_PC <= X"00000002";
-		JUMP <= '0';
-		PCSrc <= '0';
-		JUMPpC <= X"00000004";
-		wait for 100 ns;
-	
-		BEQ_PC <= X"00000003";
-		JUMP <= '1';
-		PCSrc <= '0';
-		JUMPpC <= X"00000004";
-		
-		wait for 100 ns;
-
-		BEQ_PC <= X"00000008";
-		JUMP <= '0';
-		PCSrc <= '1';
-		JUMPpC <= X"00000002";
-		wait for 100 ns;
-      -- insert stimulus here 
-		
-		BEQ_PC <= X"0000000C";
-		JUMP <= '1';
-		PCSrc <= '1';
-		JUMPpc <= X"00000008";
       wait for 100 ns;
-		
-		BEQ_PC <= X"0000000C";
-		JUMP <= '0';
-		PCSrc <= '1';
-		JUMPpc <= X"00000008";
-		wait;
+
+        reset <= '1';
+        wait for 100 ns;
+
+        -- normal, expect PC_out = 00000000
+        reset <= '0';
+        In_stall_if <= '0';
+        BEQ_PC <= X"00000002";
+        PCSrc <= '0';
+        Jump <= '0';
+        JumpPC <= X"00000004";
+        wait for 100 ns;
+
+        -- normal, expect PC_out = 00000001
+        BEQ_PC <= X"00000001";
+        JUMPpC <= X"00000002";
+        wait for 100 ns;
+
+        -- jump, expect PC_out = 0000001C
+        BEQ_PC <= X"00000003";
+        Jump <= '1';
+        JumpPC <= X"0000001C";
+        wait for 100 ns;
+
+        -- normal, expect PC_out = 00000020
+        Jump <= '0';
+        wait for 200 ns;
+
+        -- beq, expect PC_out = 00000004
+        PCSrc <= '1';
+        BEQ_PC <= X"00000004";
+        Jump <= '0';
+        JumpPC <= X"00000004";
+        wait for 100 ns;
+
+        -- normal, expect PC_out = 00000005
+        PCSrc <= '0';
+        wait for 200 ns;
+
+        -- stall, expect PC_out = 00000005
+        In_stall_if <= '1';
+        wait for 100 ns;
+
+        -- normal, expect PC_out = 00000006
+        In_stall_if <= '0';
+        wait for 500 ns;
+
+        wait;
+
    end process;
 
 END;

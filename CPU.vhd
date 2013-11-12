@@ -1,31 +1,30 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use CUSTOM_TYPES.ALL;
 
 entity CPU is
     port (
         -- debug
-        Control    : IN  SLV_6;
-        Operand1   : IN  SLV_32;
-        Operand2   : IN  SLV_32;
-        Result1    : OUT SLV_32;
-        Result2    : OUT SLV_32;
-        Debug      : OUT SLV_32;
-        Debug1     : OUT SLV_32;
-        Debug2     : OUT SLV_32;
-        Debug3     : OUT SLV_32;
+        Control    : IN  std_logic_vector( 5 downto 0);
+        Operand1   : IN  std_logic_vector(31 downto 0);
+        Operand2   : IN  std_logic_vector(31 downto 0);
+        Result1    : OUT std_logic_vector(31 downto 0);
+        Result2    : OUT std_logic_vector(31 downto 0);
+        Debug      : OUT std_logic_vector(31 downto 0);
+        Debug1     : OUT std_logic_vector(31 downto 0);
+        Debug2     : OUT std_logic_vector(31 downto 0);
+        Debug3     : OUT std_logic_vector(31 downto 0);
         --
-        PC_OUT     : OUT SLV_32;
-        Reg_S1     : OUT SLV_32;
-        Reg_S2     : OUT SLV_32;
-        Reg_S3     : OUT SLV_32;
-        Reg_S4     : OUT SLV_32;
-        Reg_S5     : OUT SLV_32;
-        Reg_S6     : OUT SLV_32;
-        Reg_S7     : OUT SLV_32;
-        Reg_S8     : OUT SLV_32;
+        PC_OUT     : OUT std_logic_vector(31 downto 0);
+        Reg_S1     : OUT std_logic_vector(31 downto 0);
+        Reg_S2     : OUT std_logic_vector(31 downto 0);
+        Reg_S3     : OUT std_logic_vector(31 downto 0);
+        Reg_S4     : OUT std_logic_vector(31 downto 0);
+        Reg_S5     : OUT std_logic_vector(31 downto 0);
+        Reg_S6     : OUT std_logic_vector(31 downto 0);
+        Reg_S7     : OUT std_logic_vector(31 downto 0);
+        Reg_S8     : OUT std_logic_vector(31 downto 0);
         -- cpu
-        Clk, Reset : IN  STD_LOGIC
+        Clk, Reset : IN  std_logic
     );
 end CPU;
 
@@ -249,14 +248,10 @@ component DataMemory
 
         -- state registers
         IN_EX_MM_MemWrite          : in STD_LOGIC;
-        IN_EX_MM_MemToReg          : in STD_LOGIC;
         IN_EX_MM_MemRead           : in STD_LOGIC;
 
         -- alu related
-        IN_EX_MM_OVF               : in STD_LOGIC;
-        IN_EX_MM_Zero              : in STD_LOGIC;
         IN_EX_MM_ALU_Result        : in STD_LOGIC_VECTOR(31 downto 0);
-
         IN_EX_MM_Data2             : in STD_LOGIC_VECTOR(31 downto 0);
         IN_EX_MM_REG_WriteAddr     : in STD_LOGIC_VECTOR(4 downto 0);
 
@@ -597,13 +592,9 @@ MM: DataMemory Port Map (
         RESET             => Reset,
 
         IN_EX_MM_MemWrite => BMO_MMI_MemWrite,
-        IN_EX_MM_MemToReg => BMO_MMI_MemToReg,
         IN_EX_MM_MemRead  => BMO_MMI_MemRead,
 
-        IN_EX_MM_OVF           => BMO_MMI_Overflow,
-        IN_EX_MM_Zero          => BMO_MMI_Zero,
         IN_EX_MM_ALU_Result    => BMO_MMI_Alu_Result,
-
         IN_EX_MM_Data2         => BMO_MMI_Data,
         IN_EX_MM_REG_WriteAddr => BMO_MMI_Reg_WriteAddr,
 

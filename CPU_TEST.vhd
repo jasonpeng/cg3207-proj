@@ -32,10 +32,10 @@ USE ieee.std_logic_1164.ALL;
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
  
-ENTITY CPU_TEST IS
-END CPU_TEST;
+ENTITY CPU_test IS
+END CPU_test;
  
-ARCHITECTURE behavior OF CPU_TEST IS 
+ARCHITECTURE behavior OF CPU_test IS 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
@@ -133,11 +133,13 @@ BEGIN
    begin		
       -- hold reset state for 100 ns.
       wait for 100 ns;	
+      
 		Reset <= '1';
-      wait for Clk_period*2;
+      wait for Clk_period * 2;
+      
 		Reset <= '0';
-      -- insert stimulus here 
-		wait for Clk_period * 40;
+		wait for Clk_period * 100;
+      
       wait;
    end process;
 

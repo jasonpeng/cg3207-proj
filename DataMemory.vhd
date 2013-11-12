@@ -37,14 +37,10 @@ entity DataMemory is
 			  -- states received from EX
 			  -- state registers
 			  IN_EX_MM_MemWrite : in STD_LOGIC;
-			  IN_EX_MM_MemToReg : in STD_LOGIC;
 			  IN_EX_MM_MemRead : in STD_LOGIC;
 			  
 			  -- alu related
-			  IN_EX_MM_OVF : in STD_LOGIC;
-           IN_EX_MM_Zero : in STD_LOGIC;
            IN_EX_MM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
-			  
 			  IN_EX_MM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for Writing Data to RAM
 			  IN_EX_MM_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
 			  
@@ -57,7 +53,6 @@ end DataMemory;
 architecture Behavioral of DataMemory is
 	type ram_type is array(0 to 31) of STD_LOGIC_VECTOR(7 downto 0);
 	
-	-- TODO : Generate initial data from MARS 4.4
 	signal ram : ram_type := (	x"0a", x"00", x"00", x"00", 
 										x"0b", x"00", x"00", x"00", 
 										x"0c", x"00", x"00", x"00", 
