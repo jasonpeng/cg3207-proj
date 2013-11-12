@@ -1,31 +1,30 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use CUSTOM_TYPES.ALL;
 
 entity CPU is
     port (
         -- debug
-        Control    : IN  SLV_6;
-        Operand1   : IN  SLV_32;
-        Operand2   : IN  SLV_32;
-        Result1    : OUT SLV_32;
-        Result2    : OUT SLV_32;
-        Debug      : OUT SLV_32;
-        Debug1     : OUT SLV_32;
-        Debug2     : OUT SLV_32;
-        Debug3     : OUT SLV_32;
+        Control    : IN  std_logic_vector( 5 downto 0);
+        Operand1   : IN  std_logic_vector(31 downto 0);
+        Operand2   : IN  std_logic_vector(31 downto 0);
+        Result1    : OUT std_logic_vector(31 downto 0);
+        Result2    : OUT std_logic_vector(31 downto 0);
+        Debug      : OUT std_logic_vector(31 downto 0);
+        Debug1     : OUT std_logic_vector(31 downto 0);
+        Debug2     : OUT std_logic_vector(31 downto 0);
+        Debug3     : OUT std_logic_vector(31 downto 0);
         --
-        PC_OUT     : OUT SLV_32;
-        Reg_S1     : OUT SLV_32;
-        Reg_S2     : OUT SLV_32;
-        Reg_S3     : OUT SLV_32;
-        Reg_S4     : OUT SLV_32;
-        Reg_S5     : OUT SLV_32;
-        Reg_S6     : OUT SLV_32;
-        Reg_S7     : OUT SLV_32;
-        Reg_S8     : OUT SLV_32;
+        PC_OUT     : OUT std_logic_vector(31 downto 0);
+        Reg_S1     : OUT std_logic_vector(31 downto 0);
+        Reg_S2     : OUT std_logic_vector(31 downto 0);
+        Reg_S3     : OUT std_logic_vector(31 downto 0);
+        Reg_S4     : OUT std_logic_vector(31 downto 0);
+        Reg_S5     : OUT std_logic_vector(31 downto 0);
+        Reg_S6     : OUT std_logic_vector(31 downto 0);
+        Reg_S7     : OUT std_logic_vector(31 downto 0);
+        Reg_S8     : OUT std_logic_vector(31 downto 0);
         -- cpu
-        Clk, Reset : IN  STD_LOGIC
+        Clk, Reset : IN  std_logic
     );
 end CPU;
 

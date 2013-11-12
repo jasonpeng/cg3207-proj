@@ -25,6 +25,12 @@ xst/
 iseconfig/
 _ngo/
 xlnx_*/
+*.exe
+*.wdb
+*.cmd
+*.xmsgs
+*.ini
+isim/
 _xmsgs/
 *.pydevproject
 .project
