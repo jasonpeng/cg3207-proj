@@ -45,12 +45,23 @@ process(Operand1_a,Operand2_a,Control_a)
 	begin
 		a_in := Operand1_a;
 		b_in := Operand2_a;
-		if(Control_a = "001") then
-			a_in := conv_std_logic_vector(unsigned(Operand1_a),32);
-			b_in := conv_std_logic_vector(unsigned(Operand1_a),32);
+		sign :=a_in(31) xnor b_in(31);
+		if(control_a ="001") then
+			tmp := a_in * b_in;
+		elsif (control_a = "000" ) then
+			if(a_in(31) = '1') then
+				a_in:= not(a_in)+1;
+			end if;
+			if(b_in(31)='1') then
+				b_in := not (b_in) + 1;
+			end if;
+			tmp:= a_in * b_in;
+			if(sign = '0') then
+				tmp := not(tmp) + 1;
+			end if;
 		end if;
-		tmp:= a_in*b_in;
 		prod <= tmp;
+		tmp:=X"0000000000000000";		
 		Result2_a <= prod(63 downto 32);
 		Result1_a <= prod(31 downto 0);
 	end process;
