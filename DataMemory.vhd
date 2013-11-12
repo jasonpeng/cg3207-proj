@@ -36,25 +36,21 @@ entity DataMemory is
 			  
 			  -- states received from EX
 			  -- state registers
-			  MEM_MemWrite : in STD_LOGIC;
-			  MEM_MemToReg : in STD_LOGIC;
-			  MEM_MemRead : in STD_LOGIC;
-			  MEM_Branch : in STD_LOGIC;
+			  IN_EX_MM_MemWrite : in STD_LOGIC;
+			  IN_EX_MM_MemToReg : in STD_LOGIC;
+			  IN_EX_MM_MemRead : in STD_LOGIC;
 			  
 			  -- alu related
-			  MEM_OVF : in STD_LOGIC;
-           MEM_Zero : in STD_LOGIC;
-           MEM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
+			  IN_EX_MM_OVF : in STD_LOGIC;
+           IN_EX_MM_Zero : in STD_LOGIC;
+           IN_EX_MM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
 			  
-			  MEM_BEQ_Addr : in STD_LOGIC_VECTOR(31 downto 0); -- computed BEQ address
-			  MEM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for Writing Data to RAM
-			  MEM_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
+			  IN_EX_MM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for Writing Data to RAM
+			  IN_EX_MM_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
 			  
-           WB_PCSrc : out STD_LOGIC;
-           WB_Data : out  STD_LOGIC_VECTOR(31 downto 0);
-			  WB_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
-			  WB_BEQ_Addr : out STD_LOGIC_VECTOR(31 downto 0);
-			  WB_REG_WriteAddr : out STD_LOGIC_VECTOR(4 downto 0)
+           OUT_MM_WB_Data : out  STD_LOGIC_VECTOR(31 downto 0);
+			  OUT_MM_WB_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
+			  OUT_MM_WB_REG_WriteAddr : out STD_LOGIC_VECTOR(4 downto 0)
 			  );
 end DataMemory;
 
@@ -77,15 +73,15 @@ process(CLK)
 	variable data    : STD_LOGIC_VECTOR(31 downto 0);
 	variable rw      : STD_LOGIC_VECTOR(1 downto 0);
 begin
-	rw := MEM_MemRead & MEM_MemWrite;
-	address := to_integer(unsigned(MEM_ALU_Result(4 downto 0)));
+	rw := IN_EX_MM_MemRead & IN_EX_MM_MemWrite;
+	address := to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 0)));
 	
 	case rw is
 		when "01" => -- write
-			ram(address+3) <= MEM_Data2(31 downto 24);
-			ram(address+2) <= MEM_Data2(23 downto 16);
-			ram(address+1) <= MEM_Data2(15 downto 8);
-			ram(address)   <= MEM_Data2(7 downto 0);
+			ram(address+3) <= IN_EX_MM_Data2(31 downto 24);
+			ram(address+2) <= IN_EX_MM_Data2(23 downto 16);
+			ram(address+1) <= IN_EX_MM_Data2(15 downto 8);
+			ram(address)   <= IN_EX_MM_Data2(7 downto 0);
 			data := (others => 'Z');
 		when "10" => -- read
 			data := ram(address+3) & ram(address+2) & ram(address+1) & ram(address);
@@ -93,11 +89,9 @@ begin
 			data := (others => 'Z');
 	end case;
 	
-	WB_Data <= data;
-	WB_PCSrc <=  MEM_Branch AND MEM_Zero;
-	WB_ALU_Result <= MEM_ALU_Result;
-	WB_BEQ_Addr <= MEM_BEQ_Addr;
-	WB_REG_WriteAddr <= MEM_REG_WriteAddr;
+	OUT_MM_WB_Data <= data;
+	OUT_MM_WB_ALU_Result <= IN_EX_MM_ALU_Result;
+	OUT_MM_WB_REG_WriteAddr <= IN_EX_MM_REG_WriteAddr;
 end process;
 
 end Behavioral;
