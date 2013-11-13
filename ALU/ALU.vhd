@@ -3,8 +3,6 @@
 --------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity multiplexer is
 Port (  I0	: in	STD_LOGIC_VECTOR ( 31 downto 0);
@@ -20,7 +18,6 @@ Port (  I0	: in	STD_LOGIC_VECTOR ( 31 downto 0);
 end multiplexer;
 
 architecture beh_multiplexer of multiplexer is
-
 begin
 
 with CH select
@@ -46,8 +43,6 @@ end beh_multiplexer;
 --------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity arithmetic is
 Port (  Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
@@ -93,8 +88,6 @@ end beh_arithmetic;
 --------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity complexop is
 Port (
@@ -131,23 +124,26 @@ architecture beh_complexop of complexop is
     );	
     end component;
 
-    signal mul_result1 :  std_logic_vector (31 downto 0) :=X"00000000";
-    signal mul_result2 : std_logic_vector (31 downto 0) := X"00000000";
-    signal div_quotient: std_logic_vector (31 downto 0) := X"00000000";
-    signal div_remainder: std_logic_vector (31 downto 0) := X"00000000";
+    signal mul_result1 :  std_logic_vector (31 downto 0);
+    signal mul_result2 : std_logic_vector (31 downto 0);
+    signal div_quotient: std_logic_vector (31 downto 0);
+    signal div_remainder: std_logic_vector (31 downto 0);
 
-    signal done_mul: std_logic :='0';
-    signal done_div: std_logic := '0';
-    signal debug_s : std_logic_vector(27 downto 0) := X"0000000";
+    signal done_mul: std_logic;
+    signal done_div: std_logic;
+    signal debug_s : std_logic_vector(27 downto 0);
 begin
 	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
 	DIVIDER_part: divider port map (Control,Operand1, Operand2, div_quotient, div_remainder, done_div,debug_s);
 	
 	Result1 <= mul_result1 when (Control(1)='0')
-				 else div_quotient when (Control(1) ='1' and done_div ='1');
+				 else div_quotient when (Control(1) ='1' and done_div ='1')
+				 else (others => 'Z');
 	Result2 <= mul_result2 when (Control(1)='0')
-				 else div_remainder when (Control(1) ='1' and done_div ='1');
-   Debug <= debug_s when (Control(1) = '1');
+				 else div_remainder when (Control(1) ='1' and done_div ='1')
+				 else (others => 'Z');
+   Debug <= debug_s when (Control(1) = '1')
+		else (others => '0');
 	Done <=  done_mul when (Control(1) ='0')
 				else done_div when(Control(1) ='1')
             else '0';
@@ -326,39 +322,34 @@ DB: multiplexer port map(X"00000000", -- reset
                          OLFlags, -- logic
                          OSFlags, -- shift
                          OAFlags, -- arithmetic
-                         OCFlags, -- long cycles
+                         OCFlags, -- complex
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Debug);
 
 process (Control, Operand1, Operand2)
-   variable OpRun : std_logic := '0';
 begin
 	if Control(5) = '1' then -- reset
-		OpType  <= "000";
-		OpRun   := '0';
-	else
-		if OpRun = '1' then -- check long cycles running operation
-			OpRun := not OpDone;
-		end if;
+		OpType <= "000";
+		OpCode <= "000";
+		OpFlag <= (others => '0');
+		Input1 <= (others => '0');
+		Input2 <= (others => '0');
+	else	
+		OpCode <= Control(2 downto 0);
+		Input1 <= Operand1;
+		Input2 <= Operand2;
+		case (Control(4 downto 3)) is 
+		  when "00" => -- logical
+			  OpType <= "001";
+		  when "01" => -- shift
+			  OpType <= "010";
+		  when "10" => -- arithmetics
+			  OpType <= "011";
+		  when others => -- complex op
+			  OpType <= "100";
+		end case;
 		
-		if OpRun = '0' then -- read in and do po, when no Op is running
-			OpCode <= Control(2 downto 0);
-			Input1 <= Operand1;
-			Input2 <= Operand2;
-			case (Control(4 downto 3)) is 
-			  when "00" => -- logical
-				  OpType <= "001";
-			  when "01" => -- shift
-				  OpType <= "010";
-			  when "10" => -- arithmetics
-				  OpType <= "011";
-			  when others => -- complex op
-				  OpType <= "100";
-				  --OpRun  := '1';
-		  end case;
-		end if;
-		
-		OpFlag <= OpRun & OpType;
+		OpFlag <= '0' & OpType;
 	end if;
 end process;
 
