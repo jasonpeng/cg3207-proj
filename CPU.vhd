@@ -10,19 +10,6 @@ entity CPU is
         Result1    : OUT std_logic_vector(31 downto 0);
         Result2    : OUT std_logic_vector(31 downto 0);
         Debug      : OUT std_logic_vector(31 downto 0);
-        Debug1     : OUT std_logic_vector(31 downto 0);
-        Debug2     : OUT std_logic_vector(31 downto 0);
-        Debug3     : OUT std_logic_vector(31 downto 0);
-        --
-        PC_OUT     : OUT std_logic_vector(31 downto 0);
-        Reg_S1     : OUT std_logic_vector(31 downto 0);
-        Reg_S2     : OUT std_logic_vector(31 downto 0);
-        Reg_S3     : OUT std_logic_vector(31 downto 0);
-        Reg_S4     : OUT std_logic_vector(31 downto 0);
-        Reg_S5     : OUT std_logic_vector(31 downto 0);
-        Reg_S6     : OUT std_logic_vector(31 downto 0);
-        Reg_S7     : OUT std_logic_vector(31 downto 0);
-        Reg_S8     : OUT std_logic_vector(31 downto 0);
         -- cpu
         Clk, Reset : IN  std_logic
     );
@@ -388,6 +375,17 @@ signal BWO_IDI_RegWrite      : std_logic;
 signal WBO_IDI_WriteAddr     : std_logic_vector( 4 downto 0);
 signal WBO_IDI_WriteData     : std_logic_vector(31 downto 0);
 
+-- Debug
+signal PC_OUT : std_logic_vector(31 downto 0);
+signal Reg_S1 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S2 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S3 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S4 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S5 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S6 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S7 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+signal Reg_S8 : STD_LOGIC_VECTOR(31 DOWNTO 0);
+
 begin
 
 -- IFetch
@@ -635,12 +633,5 @@ WB: WriteBack Port Map (
         OUT_Reg_WriteAddr    => WBO_IDI_WriteAddr,
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
-
-    Debug <= WBO_IDI_WriteData;
-    Debug1 <= IDO_BEI_Data_1;
-    Debug2 <= IDO_BEI_Data_2;
-    Debug3 <= IDO_BEI_Data_1;
-    Result1 <= EXO_BMI_Alu_Result;
-    Result2 <= X"0000000" & "000" & IDO_BEI_RegWrite;
 
 end Behavioral;
