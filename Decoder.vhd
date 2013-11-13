@@ -1,35 +1,6 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    18:16:08 10/29/2013 
--- Design Name: 
--- Module Name:    Registers - Behavioral_Registers 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL; 
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+use ieee.numeric_std.all;
 
 entity Decoder is
     Port ( 
@@ -138,7 +109,7 @@ begin
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
 	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
 				else '0';
-	JumpPC <= register_array(CONV_INTEGER(reg_rs)) when (Opcode= "000000")
+	JumpPC <= register_array(to_integer(unsigned(reg_rs))) when (Opcode= "000000")
 		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 --	-- for mul & div cases
 	register_low <= writedata1 when (Mul_or_Div = '1')
@@ -163,27 +134,27 @@ begin
    Branch <= '1' when (Opcode= "000100" or Opcode="000001")								
 					 else '0';
 	-- for Branch cases, Forward_d is only valid in BEQ case,
-	Forward_c <= '1' when (Branch = '1' and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rs))
+	Forward_c <= '1' when (Branch = '1' and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rs))
 					else '0';
-	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rt))
+	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rt))
 					else '0';
 	-- CMP_A and CMP_B IN BEQ CASE
-	cmp_A <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
-			else register_array(CONV_INTEGER(reg_rs));
-	cmp_B <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_d = '1')
-			else register_array(CONV_INTEGER(reg_rt));
+	cmp_A <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_c = '1')
+			else register_array(to_integer(unsigned(reg_rs)));
+	cmp_B <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_d = '1')
+			else register_array(to_integer(unsigned(reg_rt)));
 	cmp_result <= '1' when ((Opcode= "000100" and (cmp_A = cmp_B))		-- case for BEQ
 							or (In_Instr(31 downto 26)="000001" and (cmp_A(31) ='0'))) --case for BGEZ & BGEZAL
 					else '0';
 	PCSrc <= cmp_result and Branch; 
 --	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
 --								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
-	--	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
+	--	register_array(to_integer(unsigned(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
 --												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
 --												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 
-	read_data_1 <= register_array(CONV_INTEGER(reg_rs));
-	read_data_2 <= register_array(CONV_INTEGER(reg_rt));
+	read_data_1 <= register_array(to_integer(unsigned(reg_rs)));
+	read_data_2 <= register_array(to_integer(unsigned(reg_rt)));
 
 	ctrl: control port map
 		(
@@ -203,17 +174,17 @@ rf:process (Clk,Reset)
 					register_array(i) <= X"00000000";
 				end loop;
 		elsif(Clk'event and Clk = '1') then	
-			if(RegWrite_in = '1' and (write_address /= 0) )then
-				register_array(conv_integer(write_address)) <= writedata1;
+			if(RegWrite_in = '1' and (write_address /= "00000") )then
+				register_array(to_integer(unsigned(write_address))) <= writedata1;
 				if(Opcode = "000000" and funct = "001001") then   	-- case jalr
-					register_array(conv_integer(reg_rd)) <= (In_PC + x"00000004");
+					register_array(to_integer(unsigned(reg_rd))) <= std_logic_vector(unsigned(In_PC) + x"00000004");
 				elsif	(Opcode="000000" and funct= "010010")	then					
-					register_array(conv_integer(reg_rd)) <=register_low ;-- case mvlo
+					register_array(to_integer(unsigned(reg_rd))) <=register_low ;-- case mvlo
 				elsif (Opcode= "000000" and funct= "010000") then
-					 register_array(conv_integer(reg_rd)) <= register_high ; -- case mvhi
+					 register_array(to_integer(unsigned(reg_rd))) <= register_high ; -- case mvhi
 				end if;
 				if((cmp_result = '1' and Branch = '1' and (reg_rt = "10001")) or Opcode = "000011") then
-					register_array(31) <= (In_PC + X"0000004");
+					register_array(31) <= std_logic_vector(unsigned(In_PC) + X"0000004");
 				end if;
 			end if;
 
