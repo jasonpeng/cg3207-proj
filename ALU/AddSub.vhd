@@ -1,7 +1,5 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity addsub_lookahead is
 Port (  Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
@@ -12,7 +10,6 @@ Port (  Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		Debug		: out	STD_LOGIC_VECTOR (27 downto 0));
 end addsub_lookahead;
 
---- Using lookahead
 architecture beh_addsub_lookahead of addsub_lookahead is
 	component adder_lookahead_4
 	Port (
@@ -33,11 +30,14 @@ begin
 	L0: adder_lookahead_4 port map(Operand1(3 downto 0),   OP2(3 downto 0),   Cin,  buffer1(3 downto 0),   C(0));
 	L1: adder_lookahead_4 port map(Operand1(7 downto 4),   OP2(7 downto 4),   C(0), buffer1(7 downto 4),   C(1));
 	L2: adder_lookahead_4 port map(Operand1(11 downto 8),  OP2(11 downto 8),  C(1), buffer1(11 downto 8),  C(2));
-	L3: adder_lookahead_4 port map(Operand1(15 downto 12), OP2(15 downto 12), C(2), buffer1(15 downto 12),  C(3));
+	L3: adder_lookahead_4 port map(Operand1(15 downto 12), OP2(15 downto 12), C(2), buffer1(15 downto 12), C(3));
 	L4: adder_lookahead_4 port map(Operand1(19 downto 16), OP2(19 downto 16), C(3), buffer1(19 downto 16), C(4));
 	L5: adder_lookahead_4 port map(Operand1(23 downto 20), OP2(23 downto 20), C(4), buffer1(23 downto 20), C(5));
 	L6: adder_lookahead_4 port map(Operand1(27 downto 24), OP2(27 downto 24), C(5), buffer1(27 downto 24), C(6));
 	L7: adder_lookahead_4 port map(Operand1(31 downto 28), OP2(31 downto 28), C(6), buffer1(31 downto 28), C(7));
+	
+	Result1 <= buffer1;
+	Result2 <= (others => '0');
 	
 	process (Control, Operand1, Operand2, C, buffer1)
 		variable O : STD_LOGIC := '0';
@@ -51,9 +51,6 @@ begin
 			Cin <= '0';
 			OP2 <= Operand2;
 		 end if;
-
-		Result1 <= buffer1;
-		Result2 <= X"00000000";
 		
 		if (Control(0) = '0') then
 			operand_same_sign := NOT (Operand1(31) XOR Operand2(31));
@@ -70,8 +67,6 @@ end beh_addsub_lookahead;
 --- lookahead entity
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity adder_lookahead_4 is
 Port (
