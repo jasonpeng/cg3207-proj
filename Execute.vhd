@@ -2,7 +2,6 @@
 -------- FORWARDING UNIT ----
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
 
 entity Forwarding_Unit is
 	Port(
@@ -64,12 +63,6 @@ end Behavioral;
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
-use IEEE.NUMERIC_STD.ALL;
-
---use CUSTOM_TYPES.ALL;
-
 entity Execute is
     Port (
 		IN_ID_EX_ALUOp : in  STD_LOGIC_VECTOR(2 downto 0);
@@ -128,7 +121,7 @@ signal FWU_B : STD_LOGIC_VECTOR(1 downto 0);
 
 -- ALU Component --
 component ALU
-	Port (	
+	Port (
 		Control		: in	STD_LOGIC_VECTOR ( 5 downto 0);
 		Operand1		: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2		: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -177,10 +170,18 @@ OUT_EX_MM_ALU_Result_1 <= ALU_R1;
 OUT_EX_MM_ALU_Result_2 <= ALU_R2;
 
 -- Set MEM_Zero
-OUT_EX_MM_Zero <= '1' when ALU_R1 = X"00000000"
-		else        '0';
+OUT_EX_MM_Zero <= 
+	'1' when ALU_R1 = X"00000000"
+	else '0';
+		
+-- Select Register Write Address
+OUT_EX_MM_RegWriteAddr <= 
+	IN_ID_EX_Instr_20_16 when IN_ID_EX_RegDst='0'
+	else IN_ID_EX_Instr_15_11 when IN_ID_EX_RegDst='1'
+	else "XXXXX";
 
-process(IN_ID_EX_ALUOp,
+process(
+		IN_ID_EX_ALUOp,
 		IN_ID_EX_SignExtended,
 		IN_ID_EX_ALUSrc,
 		IN_ID_EX_Data1,
@@ -196,13 +197,19 @@ process(IN_ID_EX_ALUOp,
 		IN_EX_MM_ALU_Result,
 		IN_MM_WB_RegWrite,
 		IN_MM_WB_RD,
-		IN_WB_Reg_Data
+		IN_WB_Reg_Data,
+		
+		FWU_A, 
+		FWU_B
 		)
 	
 	variable A : STD_LOGIC_VECTOR(31 downto 0); -- op1 for ALU
 	variable B : STD_LOGIC_VECTOR(31 downto 0); -- op2 for ALU
 	variable shftamt : STD_LOGIC_VECTOR(31 downto 0); -- shift amount
 	variable R_funct : STD_LOGIC_VECTOR(5 downto 0); -- ALU R type funct (Instr[5-0])
+	variable b_sll : boolean;
+	variable b_sra : boolean;
+	variable b_srl : boolean;
 begin
 	-- forwarding mux for A and B (op1 and op2)
 	case FWU_A is 
@@ -212,22 +219,43 @@ begin
 		when others => A := (others => 'X');
 	end case;
 	
-	case FWU_B is 
-		when "00" =>
-			case IN_ID_EX_ALUSrc is 
-				when '0' => B := IN_ID_EX_Data2;
-				when '1' => B := IN_ID_EX_SignExtended;
-				when others => B := (others => 'X');
-			end case;
-		when "01" => B := IN_EX_MM_ALU_Result;
-		when "10" => B := IN_WB_Reg_Data;
-		when others => B := (others => 'X');
-	end case;
+	if (FWU_B="00" AND IN_ID_EX_ALUSrc='0') then
+		B := IN_ID_EX_Data2;
+	elsif (FWU_B="00" AND IN_ID_EX_ALUSrc='1') then
+		B := IN_ID_EX_SignExtended;
+	elsif (FWU_B="01") then
+		B := IN_EX_MM_ALU_Result;
+	elsif (FWU_B="10") then
+		B := IN_WB_Reg_Data;
+	else
+		B := (others => 'X');
+	end if;
+	
+	shftamt := X"000000" & "000" & IN_ID_EX_SignExtended(10 downto 6);
+	R_funct := IN_ID_EX_SignExtended(5 downto 0);
+	b_sll := (IN_ID_EX_ALUOp="100" AND (R_funct="000000" OR R_funct="000100"))
+		OR (IN_ID_EX_ALUOp="011"); -- sll, sllv, lui
+	b_sra := IN_ID_EX_ALUOp="100" AND (R_funct="000011" OR R_funct="000111"); -- sra, srav
+	b_srl := IN_ID_EX_ALUOp="100" AND (R_funct="000010" OR R_funct="000110"); -- srl, srlv
 	
 	-- set ALU Op1 and Op2
-	ALU_Op1 <= A;
-	ALU_Op2 <= B;
-	shftamt := X"000000" & "000" & IN_ID_EX_SignExtended(10 downto 6);
+	if ( b_sll OR b_sra OR b_srl ) then -- shifts
+		ALU_Op1 <= B;
+	else
+		ALU_Op1 <= A;
+	end if;
+	
+	if (IN_ID_EX_ALUOp="100" AND (R_funct="000000"  OR R_funct="000011" 
+			OR R_funct="000010") ) then -- sll, sra, srl
+		ALU_Op2 <= shftamt;
+	elsif (IN_ID_EX_ALUOp="100" AND (R_funct="000100" OR R_funct="000111" 
+			OR R_funct="000110") ) then -- sllv, srav, srlv
+		ALU_Op2 <= A;
+	elsif (IN_ID_EX_ALUOp="011") then -- lui
+		ALU_Op2 <= X"00000010";
+	else
+		ALU_Op2 <= B;
+	end if;
 	
 	-- mux for ALUOp
 	case IN_ID_EX_ALUOp is
@@ -235,28 +263,16 @@ begin
 		R_funct := IN_ID_EX_SignExtended(5 downto 0);
 		case R_funct is
 			when "000000" => -- sll
-				ALU_Op1 <= B;
-				ALU_Op2 <= shftamt;
 				ALU_Ctrl <= "001000";
 			when "000100" => -- sllv
-				ALU_Op1 <= B;
-				ALU_Op2 <= A;
 				ALU_Ctrl <= "001000";
 			when "000011" => -- sra
-				ALU_Op1 <= B;
-				ALU_Op2 <= shftamt;
 				ALU_Ctrl <= "001011";
 			when "000111" => -- srav
-				ALU_Op1 <= B;
-				ALU_Op2 <= A;
 				ALU_Ctrl <= "001011";
 			when "000010" => -- srl
-				ALU_Op1 <= B;
-				ALU_Op2 <= shftamt;
 				ALU_Ctrl <= "001010";
 			when "000110" => -- srlv
-				ALU_Op1 <= B;
-				ALU_Op2 <= A;
 				ALU_Ctrl <= "001010";
 			when "100000" => -- add, with overflow;
 				ALU_Ctrl <= "010000";
@@ -282,7 +298,7 @@ begin
 				ALU_Ctrl <= "000010";
 			when "100111" => -- nor
 				ALU_Ctrl <= "000100";
-			when "100110" => -- xor			
+			when "100110" => -- xor                        
 				ALU_Ctrl <= "000011";
 			when others => -- undefined, nop
 				ALU_Ctrl <= "000000";
@@ -294,29 +310,20 @@ begin
 	when "010" => -- SLTI
 		ALU_Ctrl <= "010110";
 	when "011" => -- LUI
-		ALU_Op1 <= B;
-		ALU_Op2 <= X"00000010";
 		ALU_Ctrl <= "001000";
 	when "111" => -- ORI
 		ALU_Ctrl <= "000010";
 	when others =>
 		ALU_Ctrl <= "000000";
 	end case;
-	
+
+	-- MUL or DIV flag
 	if ( IN_ID_EX_ALUOp = "100" 
 		AND ( R_funct="011000" OR R_funct="011001" OR R_funct="011010" OR R_funct="011011")) then
 		OUT_EX_MM_MULDIV <= '1';
 	else
 		OUT_EX_MM_MULDIV <= '0';
 	end if;
-		
-	-- Select Register Write Address
-	case IN_ID_EX_RegDst is
-		when '0' => OUT_EX_MM_RegWriteAddr <= IN_ID_EX_Instr_20_16;
-		when '1' => OUT_EX_MM_RegWriteAddr <= IN_ID_EX_Instr_15_11;
-		when others => OUT_EX_MM_RegWriteAddr <= "XXXXX";
-	end case;
-	
 end process;
 
 end Behavioral;
