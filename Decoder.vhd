@@ -78,7 +78,6 @@ entity Decoder is
 				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-				Reg_s31: OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
 			  Instr_25to21: out std_logic_vector(4 downto 0);
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
 			  Instr_15to11: out std_logic_vector (4 downto 0)
@@ -137,7 +136,7 @@ begin
 	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
-	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or Opcode = "000000")-- case for jump
+	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
 				else '0';
 	JumpPC <= register_array(CONV_INTEGER(reg_rs)) when (Opcode= "000000")
 		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
@@ -158,7 +157,6 @@ begin
 	Reg_S6 <= register_array(6); 
 	Reg_S7 <= register_array(7); 	
 	Reg_S8 <= register_array(8);
-   Reg_S31 <= register_array(31);
 -- Data hazzard detection
 	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
 						((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
@@ -215,7 +213,7 @@ rf:process (Clk,Reset)
 			elsif(RegWrite_in = '1' and (write_address /= 0) )then
 				register_array(conv_integer(write_address)) <= writedata1;
 				if(Opcode = "000000" and funct = "001001") then   	-- case jalr
-					register_array(conv_integer(reg_rd)) <= (In_PC + 4);
+					register_array(conv_integer(reg_rd)) <= (In_PC + x"00000004");
 				elsif	(Opcode="000000" and funct= "010010")	then					
 					register_array(conv_integer(reg_rd)) <=register_low ;-- case mvlo
 				elsif (Opcode= "000000" and funct= "010000") then

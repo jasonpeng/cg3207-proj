@@ -2,9 +2,9 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   02:34:46 11/01/2013
+-- Create Date:   11:02:35 11/13/2013
 -- Design Name:   
--- Module Name:   C:/Users/Jason/Documents/GitHub/cg3207-proj/CPU_TEST.vhd
+-- Module Name:   Y:/cg3207-proj/CPU_test.vhd
 -- Project Name:  Lab3
 -- Target Device:  
 -- Tool versions:  
@@ -47,18 +47,15 @@ ARCHITECTURE behavior OF CPU_test IS
          Result1 : OUT  std_logic_vector(31 downto 0);
          Result2 : OUT  std_logic_vector(31 downto 0);
          Debug : OUT  std_logic_vector(31 downto 0);
-         Debug1 : OUT  std_logic_vector(31 downto 0);
-         Debug2 : OUT  std_logic_vector(31 downto 0);
-         Debug3 : OUT  std_logic_vector(31 downto 0);
-         PC_OUT : OUT  std_logic_vector(31 downto 0);
-         Reg_S1 : OUT  std_logic_vector(31 downto 0);
-         Reg_S2 : OUT  std_logic_vector(31 downto 0);
-         Reg_S3 : OUT  std_logic_vector(31 downto 0);
-         Reg_S4 : OUT  std_logic_vector(31 downto 0);
-         Reg_S5 : OUT  std_logic_vector(31 downto 0);
-         Reg_S6 : OUT  std_logic_vector(31 downto 0);
-         Reg_S7 : OUT  std_logic_vector(31 downto 0);
-         Reg_S8 : OUT  std_logic_vector(31 downto 0);
+         REG1 : OUT  std_logic_vector(31 downto 0);
+         REG2 : OUT  std_logic_vector(31 downto 0);
+         REG3 : OUT  std_logic_vector(31 downto 0);
+         REG4 : OUT  std_logic_vector(31 downto 0);
+         REG5 : OUT  std_logic_vector(31 downto 0);
+         REG6 : OUT  std_logic_vector(31 downto 0);
+         REG7 : OUT  std_logic_vector(31 downto 0);
+         REG8 : OUT  std_logic_vector(31 downto 0);
+         ALU_OP : OUT  std_logic_vector(2 downto 0);
          Clk : IN  std_logic;
          Reset : IN  std_logic
         );
@@ -76,21 +73,18 @@ ARCHITECTURE behavior OF CPU_test IS
    signal Result1 : std_logic_vector(31 downto 0);
    signal Result2 : std_logic_vector(31 downto 0);
    signal Debug : std_logic_vector(31 downto 0);
-   signal Debug1 : std_logic_vector(31 downto 0);
-   signal Debug2 : std_logic_vector(31 downto 0);
-   signal Debug3 : std_logic_vector(31 downto 0);
-   signal PC_OUT : std_logic_vector(31 downto 0);
-   signal Reg_S1 : std_logic_vector(31 downto 0);
-   signal Reg_S2 : std_logic_vector(31 downto 0);
-   signal Reg_S3 : std_logic_vector(31 downto 0);
-   signal Reg_S4 : std_logic_vector(31 downto 0);
-   signal Reg_S5 : std_logic_vector(31 downto 0);
-   signal Reg_S6 : std_logic_vector(31 downto 0);
-   signal Reg_S7 : std_logic_vector(31 downto 0);
-   signal Reg_S8 : std_logic_vector(31 downto 0);
+   signal REG1 : std_logic_vector(31 downto 0);
+   signal REG2 : std_logic_vector(31 downto 0);
+   signal REG3 : std_logic_vector(31 downto 0);
+   signal REG4 : std_logic_vector(31 downto 0);
+   signal REG5 : std_logic_vector(31 downto 0);
+   signal REG6 : std_logic_vector(31 downto 0);
+   signal REG7 : std_logic_vector(31 downto 0);
+   signal REG8 : std_logic_vector(31 downto 0);
+   signal ALU_OP : std_logic_vector(2 downto 0);
 
    -- Clock period definitions
-   constant Clk_period : time := 10 ns;
+   constant Clk_period : time := 100 ns;
  
 BEGIN
  
@@ -102,18 +96,15 @@ BEGIN
           Result1 => Result1,
           Result2 => Result2,
           Debug => Debug,
-          Debug1 => Debug1,
-          Debug2 => Debug2,
-          Debug3 => Debug3,
-          PC_OUT => PC_OUT,
-          Reg_S1 => Reg_S1,
-          Reg_S2 => Reg_S2,
-          Reg_S3 => Reg_S3,
-          Reg_S4 => Reg_S4,
-          Reg_S5 => Reg_S5,
-          Reg_S6 => Reg_S6,
-          Reg_S7 => Reg_S7,
-          Reg_S8 => Reg_S8,
+          REG1 => REG1,
+          REG2 => REG2,
+          REG3 => REG3,
+          REG4 => REG4,
+          REG5 => REG5,
+          REG6 => REG6,
+          REG7 => REG7,
+          REG8 => REG8,
+          ALU_OP => ALU_OP,
           Clk => Clk,
           Reset => Reset
         );
@@ -133,13 +124,13 @@ BEGIN
    begin		
       -- hold reset state for 100 ns.
       wait for 100 ns;	
-      
-		Reset <= '1';
-      wait for Clk_period * 2;
-      
-		Reset <= '0';
-		wait for Clk_period * 100;
-      
+		Reset <='1';
+		wait for 100 ns;
+		Reset <='0';
+      wait for Clk_period*100;
+
+      -- insert stimulus here 
+
       wait;
    end process;
 
