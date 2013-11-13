@@ -92,7 +92,7 @@ BEGIN
 		divisor_i <= X"00000004";
 
 		wait for 100 ns;
-		Control_a <= "011";
+		dividend_i <= X"00000009";
       -- insert stimulus here 
 
       wait;

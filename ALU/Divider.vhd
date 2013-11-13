@@ -24,7 +24,6 @@ use ieee.std_logic_arith.all;
 
 entity divider is  
   port (
-		  enable: in std_logic;
 		  Control_a: in std_logic_vector(2 downto 0);
         dividend_i	: in  std_logic_vector(31 downto 0);
         divisor_i	: in  std_logic_vector(31 downto 0);
@@ -38,9 +37,11 @@ end divider;
 architecture rtl of divider is
 
 signal counter: std_logic_vector (5 downto 0);
+signal start : std_logic := '0';
+signal done : std_logic;
 begin  
 
-process(enable,counter)
+process(Control_a, dividend_i, divisor_i, counter)
 variable divident:std_logic_vector(31 downto 0);
 variable divisor: std_logic_vector(31 downto 0);
 variable tmp_rem: std_logic_vector(31 downto 0) := (others=>'0');
@@ -49,9 +50,10 @@ variable rem_sign: std_logic := '0';
 variable quo_sign: std_logic := '0';
 variable divisor_check:std_logic;
 begin
-	if(enable'event and enable ='1') then
+	if(start = '0') then
 		done_b <= '0';
 		counter <= "100001";
+		start <= '1';
 	elsif(counter = "100001") then		--initialize
 			tmp_rem := X"00000000";
 			tmp_quo := X"00000000";
@@ -95,6 +97,7 @@ begin
 				debug_b <= X"fffffff";
 			end if;
 				done_b<= '1';
+				start <= '0';
 	else
 			tmp_rem(31 downto 1):= tmp_rem(30 downto 0);
 			tmp_rem(0) := divident(31);

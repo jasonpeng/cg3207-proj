@@ -97,7 +97,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.ALL;
 
 entity complexop is
-Port (Enable: in std_logic;
+Port (
       Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
 		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
 		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -121,7 +121,6 @@ architecture beh_complexop of complexop is
 
 	component divider is
 	port (
-		  enable: in std_logic;
 		  Control_a: in std_logic_vector(2 downto 0);
         dividend_i	: in  std_logic_vector(31 downto 0);
         divisor_i	: in  std_logic_vector(31 downto 0);
@@ -140,12 +139,9 @@ architecture beh_complexop of complexop is
     signal done_mul: std_logic :='0';
     signal done_div: std_logic := '0';
     signal debug_s : std_logic_vector(27 downto 0) := X"0000000";
-	 signal enable_a: std_logic;
 begin
-	enable_a <= '0' when (done_div ='1')
-					else enable;
 	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
-	DIVIDER_part: divider port map (enable_a,Control,Operand1, Operand2, div_quotient, div_remainder, done_div,debug_s);
+	DIVIDER_part: divider port map (Control,Operand1, Operand2, div_quotient, div_remainder, done_div,debug_s);
 	
 	Result1 <= mul_result1 when (Control(1)='0')
 				 else div_quotient when (Control(1) ='1' and done_div ='1');
@@ -219,7 +215,6 @@ architecture Behavioral of alu is
 
     component complexop
     Port (
-				Enable   : in std_logic;
             Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
             Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
             Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
@@ -229,7 +224,6 @@ architecture Behavioral of alu is
             Done        : out   STD_LOGIC);
     end component;
     
-	 signal Enable : std_logic;
     signal OpDone : std_logic;    
     signal OpType : std_logic_vector(2 downto 0);
     signal OpCode : std_logic_vector(2 downto 0);
@@ -306,7 +300,7 @@ SF: shift port map(OpCode, Input1, Input2, SOutput1, SOutput2, SFlags);
 -- arithmetics operations
 AR: arithmetic port map(OpCode, Input1, Input2, AOutput1, AOutput2, AFlags);
 -- complex operations
-CO: complexop port map(Enable, OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
+CO: complexop port map(OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
 
 -- multiplex output
 R1: multiplexer port map(X"00000000", -- reset
@@ -347,8 +341,6 @@ begin
 			OpRun := not OpDone;
 		end if;
 		
-	
-		
 		if OpRun = '0' then -- read in and do po, when no Op is running
 			OpCode <= Control(2 downto 0);
 			Input1 <= Operand1;
@@ -356,16 +348,12 @@ begin
 			case (Control(4 downto 3)) is 
 			  when "00" => -- logical
 				  OpType <= "001";
-				  Enable <= '0';
 			  when "01" => -- shift
 				  OpType <= "010";
-				  Enable <= '0';
 			  when "10" => -- arithmetics
 				  OpType <= "011";
-				  Enable <= '0';
 			  when others => -- complex op
 				  OpType <= "100";
-				  Enable <= '1';
 				  --OpRun  := '1';
 		  end case;
 		end if;
