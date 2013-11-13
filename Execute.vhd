@@ -175,7 +175,11 @@ ALU1 : ALU Port Map (
 -- Set MEM_ALU_Result
 OUT_EX_MM_ALU_Result_1 <= ALU_R1;
 OUT_EX_MM_ALU_Result_2 <= ALU_R2;
-	
+
+-- Set MEM_Zero
+OUT_EX_MM_Zero <= '1' when ALU_R1 = X"00000000"
+		else        '0';
+
 process(IN_ID_EX_ALUOp,
 		IN_ID_EX_SignExtended,
 		IN_ID_EX_ALUSrc,
@@ -305,14 +309,7 @@ begin
 	else
 		OUT_EX_MM_MULDIV <= '0';
 	end if;
-	
-	-- Set MEM_Zero
-	if (ALU_R1 = X"00000000") then
-		OUT_EX_MM_Zero <= '1';
-	else
-		OUT_EX_MM_Zero <= '0';
-	end if;
-	
+		
 	-- Select Register Write Address
 	case IN_ID_EX_RegDst is
 		when '0' => OUT_EX_MM_RegWriteAddr <= IN_ID_EX_Instr_20_16;
