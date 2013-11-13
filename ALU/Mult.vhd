@@ -38,6 +38,8 @@ architecture beh of multiply is
 signal Count: std_logic_vector(7 downto 0) :=X"04";
 signal prod: std_logic_vector(63 downto 0);
 begin
+Result2_a <= prod(63 downto 32);
+Result1_a <= prod(31 downto 0);
 process(Operand1_a,Operand2_a,Control_a)
 	variable sign: std_logic;
 	variable tmp: std_logic_vector(63 downto 0);
@@ -47,6 +49,7 @@ process(Operand1_a,Operand2_a,Control_a)
 		a_in := Operand1_a;
 		b_in := Operand2_a;
 		sign :=a_in(31) xnor b_in(31);
+		tmp := (others => '0');
 		if(control_a ="001") then
 			tmp := a_in * b_in;
 		elsif (control_a = "000" ) then
@@ -62,8 +65,5 @@ process(Operand1_a,Operand2_a,Control_a)
 			end if;
 		end if;
 		prod <= tmp;
-		tmp:=X"0000000000000000";		
-		Result2_a <= prod(63 downto 32);
-		Result1_a <= prod(31 downto 0);
 	end process;
 end beh;
