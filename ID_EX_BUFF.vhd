@@ -77,10 +77,7 @@ end ID_EX_BUFF;
 architecture Behavioral of ID_EX_BUFF is
 begin
 
-process(CLK, RESET,
-	IN_ID_ALUOp, IN_ID_SignExtended, IN_ID_ALUSrc, IN_ID_Data1, IN_ID_Data2,
-	IN_ID_RegDst, IN_ID_Instr_20_16, IN_ID_Instr_15_11,
-	IN_ID_MemWrite, IN_ID_MemToReg, IN_ID_MemRead)
+process(CLK, RESET)
 begin
 	if (RESET = '1') then
 	  OUT_EX_ALUOp 			<=		"000";
