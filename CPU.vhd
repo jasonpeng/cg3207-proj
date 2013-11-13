@@ -329,14 +329,9 @@ signal BEO_EXI_Branch_Extend : STD_LOGIC_VECTOR(31 downto 0);
 signal BEO_EXI_MemWrite      : STD_LOGIC;
 signal BEO_EXI_MemToReg      : STD_LOGIC;
 signal BEO_EXI_MemRead       : STD_LOGIC;
-signal BEO_EXI_MemBranch     : STD_LOGIC;
 signal BEO_BMI_RegWrite      : STD_LOGIC;
 
 -- EX
-signal EXO_BMI_MemWrite      : STD_LOGIC;
-signal EXO_BMI_MemToReg      : STD_LOGIC;
-signal EXO_BMI_MemRead       : STD_LOGIC;
-signal EXO_BMI_MemBranch     : STD_LOGIC;
 signal EXO_BMI_Overflow      : STD_LOGIC;
 signal EXO_BMI_Zero          : STD_LOGIC;
 signal EXO_BMI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
@@ -348,8 +343,6 @@ signal EXO_BMI_WriteAddr     : STD_LOGIC_VECTOR( 4 downto 0);
 signal BMO_MMI_MemWrite      : STD_LOGIC;
 signal BMO_MMI_MemToReg      : STD_LOGIC;
 signal BMO_MMI_MemRead       : STD_LOGIC;
-signal BMO_MMI_Overflow      : STD_LOGIC;
-signal BMO_MMI_Zero          : STD_LOGIC;
 signal BMO_BWI_RegWrite      : STD_LOGIC;
 signal BMO_MMI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
 signal BMO_BWI_Alu_Result_2  : STD_LOGIC_VECTOR(31 downto 0);
@@ -375,17 +368,6 @@ signal BWO_IDI_RegWrite      : std_logic;
 signal WBO_IDI_WriteAddr     : std_logic_vector( 4 downto 0);
 signal WBO_IDI_WriteData     : std_logic_vector(31 downto 0);
 
--- Debug
-signal PC_OUT : std_logic_vector(31 downto 0);
-signal Reg_S1 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S2 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S3 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S4 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S5 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S6 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S7 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-signal Reg_S8 : STD_LOGIC_VECTOR(31 DOWNTO 0);
-
 begin
 
 -- IFetch
@@ -402,7 +384,7 @@ IFF: Fetch Port MAP (
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-        PC_out_4        => PC_OUT,
+        --PC_out_4        => PC_OUT,
         IF_ID_Flush     => IFO_Flush
     );
 
@@ -458,14 +440,14 @@ ID: Decoder Port MAP (
         read_data_1          => IDO_BEI_Data_1,
         read_data_2          => IDO_BEI_Data_2,
 
-        Reg_S1               => Reg_S1,
-        Reg_S2               => Reg_S2,
-        Reg_S3               => Reg_S3,
-        Reg_S4               => Reg_S4,
-        Reg_S5               => Reg_S5,
-        Reg_S6               => Reg_S6,
-        Reg_S7               => Reg_S7,
-        Reg_S8               => Reg_S8,
+        --Reg_S1               => Reg_S1,
+        --Reg_S2               => Reg_S2,
+        --Reg_S3               => Reg_S3,
+        --Reg_S4               => Reg_S4,
+        --Reg_S5               => Reg_S5,
+        --Reg_S6               => Reg_S6,
+        --Reg_S7               => Reg_S7,
+        --Reg_S8               => Reg_S8,
 
         Instr_25to21         => IDO_BEI_Instr_25_21,
         Instr_20to16         => IDO_BEI_Instr_20_16,
@@ -553,9 +535,9 @@ EXMM: EX_MEM_BUFF Port Map (
         RESET                 => Reset,
 
         -- state registers
-        IN_EX_MemWrite       => EXO_BMI_MemWrite,
-        IN_EX_MemToReg       => EXO_BMI_MemToReg,
-        IN_EX_MemRead        => EXO_BMI_MemRead,
+        IN_EX_MemWrite       => BEO_EXI_MemWrite,
+        IN_EX_MemToReg       => BEO_EXI_MemToReg,
+        IN_EX_MemRead        => BEO_EXI_MemRead,
         IN_EX_RegWrite       => BEO_BMI_RegWrite,
 
         -- alu related
@@ -574,8 +556,6 @@ EXMM: EX_MEM_BUFF Port Map (
         OUT_MEM_RegWrite      => BMO_BWI_RegWrite,
 
         -- alu related
-        OUT_MEM_OVF           => BMO_MMI_Overflow,
-        OUT_MEM_Zero          => BMO_MMI_Zero,
         OUT_MEM_ALU_Result    => BMO_MMI_Alu_Result,
         OUT_MEM_ALU_Result_2  => BMO_BWI_Alu_Result_2,
         OUT_MEM_MULDIV        => BMO_BWI_MULDIV,
