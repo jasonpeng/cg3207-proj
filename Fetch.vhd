@@ -101,17 +101,16 @@ port (
 end ram_instr;
 
 architecture syn of ram_instr is
-    type rom_type is array (0 to 36) of std_logic_vector (31 downto 0);  
+    type rom_type is array (0 to 35) of std_logic_vector (31 downto 0);  
 	 -- currently, set 0-6 for test purpose
     CONSTANT ROM : rom_type := (
-	 x"00000000",x"3c010002",x"34020003",x"8c230004",
-	 x"00612022",x"00612824",x"00613025",x"00613826",x"00414020",
+	 x"00000000",x"3c020004",x"34630000",x"8c640004",x"00822822",x"00813024",x"00813825",x"00814026",
 	 x"00000000",x"00834022",x"00000000",x"ac050000",
-
+	 X"00000000",
 x"00000000",x"00834022",x"00000000",x"ac050000",
 x"00000000",x"00000000",x"00000000",x"8c080000",
 x"00000000",x"00000000",x"00000000",x"0800001d",x"00000000",x"00000000",x"00000000",x"00000000",
-x"0022402a",x"116cffe3",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+x"0022402a",x"116cffe3",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
 
 begin
  -- currently just 8 instructions, after conversion, the value of ADDR should not bigger than 7

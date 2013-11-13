@@ -631,8 +631,8 @@ WB: WriteBack Port Map (
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
 --
-	result1(4 downto 0)<= WBO_IDI_WriteAddr ;
-	result2<= WBO_IDI_WRITEData;
+	result1 <= IFO_Instr;
+	result2<= IFO_PC_Addr;
 	ALU_op <= IDO_BEI_ALU_Op;
 	REG1	<= ID_REG1;
 	REG2	<= ID_REG2;				  
