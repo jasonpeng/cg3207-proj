@@ -457,14 +457,14 @@ ID: Decoder Port MAP (
         read_data_1          => IDO_BEI_Data_1,
         read_data_2          => IDO_BEI_Data_2,
 
-        --Reg_S1               => Reg_S1,
-        --Reg_S2               => Reg_S2,
-        --Reg_S3               => Reg_S3,
-        --Reg_S4               => Reg_S4,
-        --Reg_S5               => Reg_S5,
-        --Reg_S6               => Reg_S6,
-        --Reg_S7               => Reg_S7,
-        --Reg_S8               => Reg_S8,
+        Reg_S1               => ID_REG1,
+        Reg_S2               => ID_REG2,
+        Reg_S3               => ID_REG3,
+        Reg_S4               => ID_REG4,
+        Reg_S5               => ID_REG5,
+        Reg_S6               => ID_REG6,
+        Reg_S7               => ID_REG7,
+        Reg_S8               => ID_REG8,
 
         Instr_25to21         => IDO_BEI_Instr_25_21,
         Instr_20to16         => IDO_BEI_Instr_20_16,
@@ -631,7 +631,16 @@ WB: WriteBack Port Map (
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
 --
-	result1<= IFO_PC_Addr;
-	result2<= DBO_IDI_Instr;
+	result1(4 downto 0)<= WBO_IDI_WriteAddr ;
+	result2<= WBO_IDI_WRITEData;
 	ALU_op <= IDO_BEI_ALU_Op;
+	REG1	<= ID_REG1;
+	REG2	<= ID_REG2;				  
+	REG3	<= ID_REG3;				  
+   REG4 <= ID_REG4;
+   REG5	<=ID_REG5;				 
+   REG6	 <= ID_REG6;				  
+   REG7	<=ID_REG7;		 
+  	REG8<=ID_REG8;
+
 end Behavioral;
