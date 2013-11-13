@@ -191,6 +191,9 @@ begin
 --												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
 --												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 
+				read_data_1 <= register_array(CONV_INTEGER(reg_rs));
+				read_data_2 <= register_array(CONV_INTEGER(reg_rt));
+
 	ctrl: control port map
 		(
 				Instr => In_Instr,
@@ -223,9 +226,6 @@ rf:process (Clk,Reset)
 				end if;
 			end if;
 
-		elsif Clk = '0' then
-				read_data_1 <= register_array(CONV_INTEGER(reg_rs));
-				read_data_2 <= register_array(CONV_INTEGER(reg_rt));
 		end if;
 	end process;
 	
