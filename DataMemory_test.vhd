@@ -47,10 +47,7 @@ ARCHITECTURE behavior OF MEM_test IS
          IN_EX_MM_MemRead : IN  std_logic;
          IN_EX_MM_ALU_Result : IN  std_logic_vector(31 downto 0);
          IN_EX_MM_Data2 : IN  std_logic_vector(31 downto 0);
-         IN_EX_MM_REG_WriteAddr : IN  std_logic_vector(4 downto 0);
-         OUT_MM_WB_Data : OUT  std_logic_vector(31 downto 0);
-         OUT_MM_WB_ALU_Result : OUT  std_logic_vector(31 downto 0);
-         OUT_MM_WB_REG_WriteAddr : OUT  std_logic_vector(4 downto 0)
+         OUT_MM_WB_Data : OUT  std_logic_vector(31 downto 0)
         );
     END COMPONENT;
     
@@ -62,12 +59,9 @@ ARCHITECTURE behavior OF MEM_test IS
    signal IN_EX_MM_MemRead : std_logic := '0';
    signal IN_EX_MM_ALU_Result : std_logic_vector(31 downto 0) := (others => '0');
    signal IN_EX_MM_Data2 : std_logic_vector(31 downto 0) := (others => '0');
-   signal IN_EX_MM_REG_WriteAddr : std_logic_vector(4 downto 0) := (others => '0');
 
  	--Outputs
    signal OUT_MM_WB_Data : std_logic_vector(31 downto 0);
-   signal OUT_MM_WB_ALU_Result : std_logic_vector(31 downto 0);
-   signal OUT_MM_WB_REG_WriteAddr : std_logic_vector(4 downto 0);
 
    -- Clock period definitions
    constant CLK_period : time := 100 ns;
@@ -82,10 +76,7 @@ BEGIN
           IN_EX_MM_MemRead => IN_EX_MM_MemRead,
           IN_EX_MM_ALU_Result => IN_EX_MM_ALU_Result,
           IN_EX_MM_Data2 => IN_EX_MM_Data2,
-          IN_EX_MM_REG_WriteAddr => IN_EX_MM_REG_WriteAddr,
-          OUT_MM_WB_Data => OUT_MM_WB_Data,
-          OUT_MM_WB_ALU_Result => OUT_MM_WB_ALU_Result,
-          OUT_MM_WB_REG_WriteAddr => OUT_MM_WB_REG_WriteAddr
+          OUT_MM_WB_Data => OUT_MM_WB_Data
         );
 
    -- Clock process definitions

@@ -240,11 +240,8 @@ component DataMemory
         -- alu related
         IN_EX_MM_ALU_Result        : in STD_LOGIC_VECTOR(31 downto 0);
         IN_EX_MM_Data2             : in STD_LOGIC_VECTOR(31 downto 0);
-        IN_EX_MM_REG_WriteAddr     : in STD_LOGIC_VECTOR(4 downto 0);
 
-        OUT_MM_WB_Data             : out  STD_LOGIC_VECTOR(31 downto 0);
-        OUT_MM_WB_ALU_Result       : out STD_LOGIC_VECTOR(31 downto 0);
-        OUT_MM_WB_REG_WriteAddr    : out STD_LOGIC_VECTOR(4 downto 0)
+        OUT_MM_WB_Data             : out  STD_LOGIC_VECTOR(31 downto 0)
     );
 end component;
 
@@ -352,8 +349,6 @@ signal BMO_MMI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 
 -- MEM
 signal MMO_BWI_Data          : STD_LOGIC_VECTOR(31 downto 0);
-signal MMO_BWI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
-signal MMO_BWI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 
 -- MEM/WB
 signal BWO_WBI_MemToReg      : STD_LOGIC;
@@ -384,7 +379,7 @@ IFF: Fetch Port MAP (
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-        --PC_out_4        => PC_OUT,
+        PC_out_4        => Result1,
         IF_ID_Flush     => IFO_Flush
     );
 
@@ -574,11 +569,8 @@ MM: DataMemory Port Map (
 
         IN_EX_MM_ALU_Result    => BMO_MMI_Alu_Result,
         IN_EX_MM_Data2         => BMO_MMI_Data,
-        IN_EX_MM_REG_WriteAddr => BMO_MMI_Reg_WriteAddr,
 
-        OUT_MM_WB_Data           => MMO_BWI_Data,
-        OUT_MM_WB_ALU_Result     => MMO_BWI_Alu_Result,
-        OUT_MM_WB_REG_WriteAddr  => MMO_BWI_Reg_WriteAddr
+        OUT_MM_WB_Data           => MMO_BWI_Data
     );
 
 -- MEM_WB_BUFF
@@ -588,10 +580,10 @@ MMWB: MEM_WB_BUFF Port Map (
 
         IN_MemToReg           => BMO_MMI_MemToReg,
         IN_DataMemory_Result  => MMO_BWI_Data,
-        IN_ALU_Result         => MMO_BWI_Alu_Result,
+        IN_ALU_Result         => BMO_MMI_Alu_Result,
         IN_ALU_Result_2       => BMO_BWI_Alu_Result_2,
         IN_MUL_DIV            => BMO_BWI_MULDIV,
-        IN_REG_WriteAddr      => MMO_BWI_Reg_WriteAddr,
+        IN_REG_WriteAddr      => BMO_MMI_Reg_WriteAddr,
         IN_RegWrite           => BMO_BWI_RegWrite,
 
         OUT_MemToReg          => BWO_WBI_MemToReg,

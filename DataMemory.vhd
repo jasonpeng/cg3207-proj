@@ -34,20 +34,15 @@ entity DataMemory is
 			  CLK : in STD_LOGIC;
 			  RESET : in STD_LOGIC;
 			  
-			  -- states received from EX
 			  -- state registers
 			  IN_EX_MM_MemWrite : in STD_LOGIC;
 			  IN_EX_MM_MemRead : in STD_LOGIC;
-			  
 			  -- alu related
            IN_EX_MM_ALU_Result : in STD_LOGIC_VECTOR(31 downto 0);
 			  IN_EX_MM_Data2 : in STD_LOGIC_VECTOR(31 downto 0); -- for Writing Data to RAM
-			  IN_EX_MM_REG_WriteAddr : in STD_LOGIC_VECTOR(4 downto 0); -- register address
 			  
-           OUT_MM_WB_Data : out  STD_LOGIC_VECTOR(31 downto 0);
-			  OUT_MM_WB_ALU_Result : out STD_LOGIC_VECTOR(31 downto 0);
-			  OUT_MM_WB_REG_WriteAddr : out STD_LOGIC_VECTOR(4 downto 0)
-			  );
+           OUT_MM_WB_Data : out  STD_LOGIC_VECTOR(31 downto 0)
+		);
 end DataMemory;
 
 architecture Behavioral of DataMemory is
@@ -85,8 +80,6 @@ begin
 	end case;
 	
 	OUT_MM_WB_Data <= data;
-	OUT_MM_WB_ALU_Result <= IN_EX_MM_ALU_Result;
-	OUT_MM_WB_REG_WriteAddr <= IN_EX_MM_REG_WriteAddr;
 end process;
 
 end Behavioral;
