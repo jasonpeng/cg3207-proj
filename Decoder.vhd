@@ -1,35 +1,6 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    18:16:08 10/29/2013 
--- Design Name: 
--- Module Name:    Registers - Behavioral_Registers 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Additional Comments: 
---
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL; 
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+use ieee.numeric_std.all;
 
 entity Decoder is
     Port ( 
@@ -78,7 +49,6 @@ entity Decoder is
 				Reg_S6 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S7 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
 				Reg_S8 : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-				Reg_s31: OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
 			  Instr_25to21: out std_logic_vector(4 downto 0);
 			  Instr_20to16 : out std_logic_vector(4 downto 0);
 			  Instr_15to11: out std_logic_vector (4 downto 0)
@@ -121,9 +91,8 @@ architecture Behavioral_Decoder of Decoder is
 	SIGNAL ALUop_out : STD_LOGIC_VECTOR( 2 DOWNTO 0 ); 
 	SIGNAL Jump_out : STD_LOGIC; 
 -- for data hazzard detection 
-	SIGNAL STALL: std_logic;
-	SIGNAL hd_stall: std_logic;
 -- for control branch
+	signal Branch_PC:std_logic_vector(31 downto 0);
    signal Branch: std_logic;
 	signal Forward_c: std_logic;
 	signal Forward_d: std_logic;
@@ -134,21 +103,19 @@ begin
 
 	imm_value <= In_Instr(15 downto 0);
 	-- Read Register 1 Operation
-	Branch_Sign_extended <= X"0000" & imm_value when imm_value(15)= '0' 
+	Branch_PC <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
+
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
-	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or Opcode = "000000")-- case for jump
+	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
 				else '0';
-	JumpPC <= register_array(CONV_INTEGER(reg_rs)) when (Opcode= "000000")
+	JumpPC <= register_array(to_integer(unsigned(reg_rs))) when (Opcode= "000000")
 		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 --	-- for mul & div cases
 	register_low <= writedata1 when (Mul_or_Div = '1')
 					else x"00000000";
 	register_high <= writedata2 when (Mul_or_Div = '1')
 					else x"00000000";
-	Instr_25to21 <= reg_rs;
-	Instr_20to16 <= reg_rt;
-	Instr_15to11 <= reg_rd;
 -- check registers;
 	Reg_S1 <= register_array(1); 
 	Reg_S2 <= register_array(2); 
@@ -158,13 +125,8 @@ begin
 	Reg_S6 <= register_array(6); 
 	Reg_S7 <= register_array(7); 	
 	Reg_S8 <= register_array(8);
-   Reg_S31 <= register_array(31);
 -- Data hazzard detection
-	hd_stall <= '1' when (ID_EX_MEM_READ = '1' and 
-						((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt)))
-			 else '0';
-	ID_STALL <= hd_stall; 
-	STALL <= hd_stall;
+	
 	
 -- Branch Control hazards
 
@@ -172,27 +134,27 @@ begin
    Branch <= '1' when (Opcode= "000100" or Opcode="000001")								
 					 else '0';
 	-- for Branch cases, Forward_d is only valid in BEQ case,
-	Forward_c <= '1' when (Branch = '1' and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rs))
+	Forward_c <= '1' when (Branch = '1' and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rs))
 					else '0';
-	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /=0)and (EX_MEM_REG_RD = reg_rt))
+	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rt))
 					else '0';
 	-- CMP_A and CMP_B IN BEQ CASE
-	cmp_A <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_c = '1')
-			else register_array(CONV_INTEGER(reg_rs));
-	cmp_B <= register_array(CONV_INTEGER(EX_MEM_REG_RD)) when (Forward_d = '1')
-			else register_array(CONV_INTEGER(reg_rt));
+	cmp_A <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_c = '1')
+			else register_array(to_integer(unsigned(reg_rs)));
+	cmp_B <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_d = '1')
+			else register_array(to_integer(unsigned(reg_rt)));
 	cmp_result <= '1' when ((Opcode= "000100" and (cmp_A = cmp_B))		-- case for BEQ
 							or (In_Instr(31 downto 26)="000001" and (cmp_A(31) ='0'))) --case for BGEZ & BGEZAL
 					else '0';
 	PCSrc <= cmp_result and Branch; 
 --	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
 --								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
-	--	register_array(conv_integer(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
+	--	register_array(to_integer(unsigned(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
 --												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
 --												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 
-				read_data_1 <= register_array(CONV_INTEGER(reg_rs));
-				read_data_2 <= register_array(CONV_INTEGER(reg_rt));
+	read_data_1 <= register_array(to_integer(unsigned(reg_rs)));
+	read_data_2 <= register_array(to_integer(unsigned(reg_rt)));
 
 	ctrl: control port map
 		(
@@ -207,22 +169,22 @@ begin
 	
 rf:process (Clk,Reset)
 	begin
-		if(Clk'event and Clk = '1') then
-			if(Reset = '1') then 
+		if(Reset = '1') then 
 				for i in 0 to 31 loop
 					register_array(i) <= X"00000000";
 				end loop;
-			elsif(RegWrite_in = '1' and (write_address /= 0) )then
-				register_array(conv_integer(write_address)) <= writedata1;
+		elsif(Clk'event and Clk = '1') then	
+			if(RegWrite_in = '1' and (write_address /= "00000") )then
+				register_array(to_integer(unsigned(write_address))) <= writedata1;
 				if(Opcode = "000000" and funct = "001001") then   	-- case jalr
-					register_array(conv_integer(reg_rd)) <= (In_PC + 4);
+					register_array(to_integer(unsigned(reg_rd))) <= std_logic_vector(unsigned(In_PC) + x"00000004");
 				elsif	(Opcode="000000" and funct= "010010")	then					
-					register_array(conv_integer(reg_rd)) <=register_low ;-- case mvlo
+					register_array(to_integer(unsigned(reg_rd))) <=register_low ;-- case mvlo
 				elsif (Opcode= "000000" and funct= "010000") then
-					 register_array(conv_integer(reg_rd)) <= register_high ; -- case mvhi
+					 register_array(to_integer(unsigned(reg_rd))) <= register_high ; -- case mvhi
 				end if;
 				if((cmp_result = '1' and Branch = '1' and (reg_rt = "10001")) or Opcode = "000011") then
-					register_array(31) <= (In_PC + X"0000004");
+					register_array(31) <= std_logic_vector(unsigned(In_PC) + X"0000004");
 				end if;
 			end if;
 
@@ -230,7 +192,8 @@ rf:process (Clk,Reset)
 	end process;
 	
 pipeline: process (Clk,Reset)
-	begin
+variable hd_stall: std_logic; 
+		begin
 		if Reset = '1' then
 			  RegWrite <= '0';
 			  MemtoReg <= '0';
@@ -240,29 +203,36 @@ pipeline: process (Clk,Reset)
 			  ALUop <="000"; 
            ALUSrc <='0'; 
 		elsif rising_edge (Clk) then
-
-				if (Stall = '0') then
-					RegDst <= RegDst_out; 
-					ALUSrc <= ALUSrc_out; 
-					MemtoReg <= MemtoReg_out; 
-					RegWrite <= RegWrite_out; 
-					MemRead <= MemRead_out; 
-					MemWrite <= MemWrite_out;
-					ALUOp <= ALUOp_out;
-
-				end if;
-				
-				if (hd_stall = '1') then
-				-- if pipeline is stalled by hazzard detection, insert nop
-				  RegWrite <= '0';
+			if(ID_EX_MEM_READ = '1' and ((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt))) then
+				hd_stall:='1';
+			 	  RegWrite <= '0';
 				  MemtoReg <= '0';
 				  MemRead <='0'; 
 				  MemWrite <='0'; 
 				  RegDst <='0'; 
 				  ALUop <="000"; 
 				  ALUSrc <='0'; 
+				Instr_25to21 <= "00000";
+				Instr_20to16 <= "00000";
+				Instr_15to11 <= "00000";
+				Branch_Sign_extended <= X"00000000"; 	
+			 else
+				hd_stall := '0';
+				RegDst <= RegDst_out; 
+					ALUSrc <= ALUSrc_out; 
+					MemtoReg <= MemtoReg_out; 
+					RegWrite <= RegWrite_out; 
+					MemRead <= MemRead_out; 
+					MemWrite <= MemWrite_out;
+					ALUOp <= ALUOp_out;
+				Instr_25to21 <= reg_rs;
+				Instr_20to16 <= reg_rt;
+				Instr_15to11 <= reg_rd;
+				Branch_Sign_extended <= Branch_PC;
 				end if;
-		end if;
+				ID_Stall <= hd_stall;
+
+				end if;
 	end process;
 end Behavioral_Decoder;
 

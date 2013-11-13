@@ -46,7 +46,6 @@ ARCHITECTURE behavior OF if_test IS
          In_stall_if : IN  std_logic;
          Instruction : OUT  std_logic_vector(31 downto 0);
          PC_out : OUT  std_logic_vector(31 downto 0);
-         PC_out_4 : OUT  std_logic_vector(31 downto 0);
          BEQ_PC : IN  std_logic_vector(31 downto 0);
          PCSrc : IN  std_logic;
          Jump : IN  std_logic;
@@ -67,7 +66,6 @@ ARCHITECTURE behavior OF if_test IS
  	--Outputs
    signal Instruction : std_logic_vector(31 downto 0);
    signal PC_out : std_logic_vector(31 downto 0);
-   signal PC_out_4 : std_logic_vector(31 downto 0);
    signal IF_ID_Flush : std_logic;
 
    -- Clock period definitions
@@ -82,7 +80,6 @@ BEGIN
           In_stall_if => In_stall_if,
           Instruction => Instruction,
           PC_out => PC_out,
-          PC_out_4 => PC_out_4,
           BEQ_PC => BEQ_PC,
           PCSrc => PCSrc,
           Jump => Jump,
@@ -119,37 +116,37 @@ BEGIN
         wait for 100 ns;
 
         -- normal, expect PC_out = 00000001
-        BEQ_PC <= X"00000001";
-        JUMPpC <= X"00000002";
-        wait for 100 ns;
-
-        -- jump, expect PC_out = 0000001C
-        BEQ_PC <= X"00000003";
-        Jump <= '1';
-        JumpPC <= X"0000001C";
-        wait for 100 ns;
-
-        -- normal, expect PC_out = 00000020
-        Jump <= '0';
-        wait for 200 ns;
-
-        -- beq, expect PC_out = 00000004
-        PCSrc <= '1';
-        BEQ_PC <= X"00000004";
-        Jump <= '0';
-        JumpPC <= X"00000004";
-        wait for 100 ns;
-
-        -- normal, expect PC_out = 00000005
-        PCSrc <= '0';
-        wait for 200 ns;
-
-        -- stall, expect PC_out = 00000005
-        In_stall_if <= '1';
-        wait for 100 ns;
-
-        -- normal, expect PC_out = 00000006
-        In_stall_if <= '0';
+--        BEQ_PC <= X"00000001";
+--        JUMPpC <= X"00000002";
+--        wait for 100 ns;
+--
+--        -- jump, expect PC_out = 0000001C
+--        BEQ_PC <= X"00000003";
+--        Jump <= '1';
+--        JumpPC <= X"0000001C";
+--        wait for 100 ns;
+--
+--        -- normal, expect PC_out = 00000020
+--        Jump <= '0';
+--        wait for 200 ns;
+--
+--        -- beq, expect PC_out = 00000004
+--        PCSrc <= '1';
+--        BEQ_PC <= X"00000004";
+--        Jump <= '0';
+--        JumpPC <= X"00000004";
+--        wait for 100 ns;
+--
+--        -- normal, expect PC_out = 00000005
+--        PCSrc <= '0';
+--        wait for 200 ns;
+--
+--        -- stall, expect PC_out = 00000005
+--        In_stall_if <= '1';
+--        wait for 100 ns;
+--
+--        -- normal, expect PC_out = 00000006
+--        In_stall_if <= '0';
         wait for 500 ns;
 
         wait;

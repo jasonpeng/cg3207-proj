@@ -36,7 +36,7 @@ end IF_ID_REG;
 architecture IF_ID_REG_ARC of IF_ID_REG is 
 
 begin 
- process(Clk,Reset,PC_ADDR_IN,INST_REG_IN) 
+ process(Clk,Reset) 
  begin 
 	 if RESET = '1' then 
 	  INST_REG_OUT <= (others => '0');

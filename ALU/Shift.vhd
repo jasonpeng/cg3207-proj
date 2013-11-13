@@ -7,8 +7,6 @@
 --------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 entity shift is
 Port (  Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);

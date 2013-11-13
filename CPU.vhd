@@ -11,6 +11,15 @@ entity CPU is
         Result2    : OUT std_logic_vector(31 downto 0);
         Debug      : OUT std_logic_vector(31 downto 0);
         -- cpu
+		  REG1					  : out std_logic_vector(31 downto 0);
+		  REG2					  : out std_logic_vector(31 downto 0);
+		  REG3					  : out std_logic_vector(31 downto 0);
+		  REG4					  : out std_logic_vector(31 downto 0);
+		  REG5					  : out std_logic_vector(31 downto 0);
+		  REG6					  : out std_logic_vector(31 downto 0);
+		  REG7					  : out std_logic_vector(31 downto 0);
+		  REG8					  : out std_logic_vector(31 downto 0);
+		  ALU_OP					  : out std_logic_vector(2 downto 0);
         Clk, Reset : IN  std_logic
     );
 end CPU;
@@ -31,7 +40,6 @@ component Fetch
 
         Instruction : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
         PC_out      : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
-        PC_out_4    : out std_logic_vector(31 downto 0);
         IF_ID_Flush : out std_logic
     ); 
 end component;
@@ -311,6 +319,14 @@ signal IDO_BEI_Instr_25_21   : std_logic_vector(4 downto 0);
 signal IDO_BEI_Instr_20_16   : std_logic_vector(4 downto 0);
 signal IDO_BEI_Instr_15_11   : std_logic_vector (4 downto 0);
 signal IDO_IFI_STALL         : std_logic;
+signal ID_REG1					  : std_logic_vector(31 downto 0);
+signal ID_REG2					  : std_logic_vector(31 downto 0);
+signal ID_REG3					  : std_logic_vector(31 downto 0);
+signal ID_REG4					  : std_logic_vector(31 downto 0);
+signal ID_REG5					  : std_logic_vector(31 downto 0);
+signal ID_REG6					  : std_logic_vector(31 downto 0);
+signal ID_REG7				  : std_logic_vector(31 downto 0);
+signal ID_REG8					  : std_logic_vector(31 downto 0);
 
 -- ID/EX
 signal BEO_EXI_ALU_Op        : STD_LOGIC_VECTOR(2 downto 0);
@@ -374,12 +390,13 @@ IFF: Fetch Port MAP (
 
         BEQ_PC          => IDO_BEI_Branch_Extend,
         PCSrc           => IDO_BEI_PCSrc,
-        Jump            => IDO_IFI_Jump,
+
+		  Jump            => IDO_IFI_Jump,
         JumpPC          => IDO_IFI_Jump_Addr,
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-        PC_out_4        => Result1,
+        --PC_out_4        => Result1,
         IF_ID_Flush     => IFO_Flush
     );
 
@@ -435,14 +452,14 @@ ID: Decoder Port MAP (
         read_data_1          => IDO_BEI_Data_1,
         read_data_2          => IDO_BEI_Data_2,
 
-        --Reg_S1               => Reg_S1,
-        --Reg_S2               => Reg_S2,
-        --Reg_S3               => Reg_S3,
-        --Reg_S4               => Reg_S4,
-        --Reg_S5               => Reg_S5,
-        --Reg_S6               => Reg_S6,
-        --Reg_S7               => Reg_S7,
-        --Reg_S8               => Reg_S8,
+        Reg_S1               => ID_REG1,
+        Reg_S2               => ID_REG2,
+        Reg_S3               => ID_REG3,
+        Reg_S4               => ID_REG4,
+        Reg_S5               => ID_REG5,
+        Reg_S6               => ID_REG6,
+        Reg_S7               => ID_REG7,
+        Reg_S8               => ID_REG8,
 
         Instr_25to21         => IDO_BEI_Instr_25_21,
         Instr_20to16         => IDO_BEI_Instr_20_16,
@@ -605,5 +622,17 @@ WB: WriteBack Port Map (
         OUT_Reg_WriteAddr    => WBO_IDI_WriteAddr,
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
+--
+	result1 <= IFO_Instr;
+	result2<= IFO_PC_Addr;
+	ALU_op <= IDO_BEI_ALU_Op;
+	REG1	<= ID_REG1;
+	REG2	<= ID_REG2;				  
+	REG3	<= ID_REG3;				  
+   REG4 <= ID_REG4;
+   REG5	<=ID_REG5;				 
+   REG6	 <= ID_REG6;				  
+   REG7	<=ID_REG7;		 
+  	REG8<=ID_REG8;
 
 end Behavioral;
