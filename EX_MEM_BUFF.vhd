@@ -71,10 +71,7 @@ end EX_MEM_BUFF;
 architecture Behavioral of EX_MEM_BUFF is
 begin
 
-process(CLK, RESET, 
-	IN_EX_MemWrite, IN_EX_MemToReg, IN_EX_MemRead, 
-	IN_EX_OVF, IN_EX_Zero, IN_EX_ALU_Result,
-	IN_EX_Data2, IN_EX_REG_WriteAddr)
+process(CLK, RESET)
 begin
 	if (RESET = '1') then
 	  OUT_MEM_MemWrite	<=		'0';

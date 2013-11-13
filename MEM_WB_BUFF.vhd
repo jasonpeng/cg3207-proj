@@ -47,25 +47,22 @@ begin
 
 process (Clk, Reset)
 begin
-
-   if (Clk'event and Clk = '1') then
-      if (Reset = '1') then
-         OUT_MemToReg           <= '0';
-         OUT_DataMemory_Result  <= (others => '0');
-         OUT_ALU_Result         <= (others => '0');
-			OUT_ALU_Result_2       <= (others => '0');
-			OUT_MUL_DIV            <= '0';
-         OUT_REG_WriteAddr      <= (others => '0');
-			OUT_RegWrite           <= '0';
-      else
-         OUT_MemToReg           <= IN_MemToReg;
-         OUT_DataMemory_Result  <= IN_DataMemory_Result;
-         OUT_ALU_Result         <= IN_ALU_Result;
-			OUT_ALU_Result_2       <= IN_ALU_Result_2;
-			OUT_MUL_DIV            <= IN_MUL_DIV;
-         OUT_REG_WriteAddr      <= IN_REG_WriteAddr;
-			OUT_RegWrite           <= IN_RegWrite;
-      end if;
+   if (Reset = '1') then
+      OUT_MemToReg           <= '0';
+      OUT_DataMemory_Result  <= (others => '0');
+      OUT_ALU_Result         <= (others => '0');
+      OUT_ALU_Result_2       <= (others => '0');
+      OUT_MUL_DIV            <= '0';
+      OUT_REG_WriteAddr      <= (others => '0');
+      OUT_RegWrite           <= '0';
+   elsif rising_edge(CLK) then
+      OUT_MemToReg           <= IN_MemToReg;
+      OUT_DataMemory_Result  <= IN_DataMemory_Result;
+      OUT_ALU_Result         <= IN_ALU_Result;
+      OUT_ALU_Result_2       <= IN_ALU_Result_2;
+      OUT_MUL_DIV            <= IN_MUL_DIV;
+      OUT_REG_WriteAddr      <= IN_REG_WriteAddr;
+      OUT_RegWrite           <= IN_RegWrite;
    end if;
 end process;
 
