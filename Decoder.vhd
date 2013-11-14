@@ -140,6 +140,17 @@ architecture Behavioral_Decoder of Decoder is
 	);
  end component;
  
+ component HazardUnit is
+   Port (
+      ID_EX_MemRead   : in std_logic;
+      ID_EX_RegRt     : in std_logic_vector(4 downto 0);
+      IF_ID_RegRs     : in std_logic_vector(4 downto 0);
+      IF_ID_RegRt     : in std_logic_vector(4 downto 0);
+      
+      STALL           : out std_logic
+   );
+   end component;
+ 
 --	Registers 
 	--TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
 	--signal register_array: register_file;
@@ -162,7 +173,8 @@ architecture Behavioral_Decoder of Decoder is
 	SIGNAL MemRead_out : STD_LOGIC; 
 	SIGNAL ALUop_out : STD_LOGIC_VECTOR( 2 DOWNTO 0 ); 
 	SIGNAL Jump_out : STD_LOGIC; 
--- for data hazzard detection 
+-- for data hazzard detection
+   signal stall : std_logic;
 -- for control branch
 	signal Branch_PC:std_logic_vector(31 downto 0);
    signal Branch: std_logic;
@@ -224,7 +236,8 @@ begin
 				RegWrite => RegWrite_out,
 				MemRead => MemRead_out,
 				MemWrite => MemWrite_out,
-				ALUOp => ALUOp_out);
+				ALUOp => ALUOp_out
+       );
 				
 	RF0 : RegisterFile port map (
 		CLK      => CLK,
@@ -237,6 +250,15 @@ begin
 		RegData_1  => RegData_1_buff,
 		RegData_2  => RegData_2_buff
 	);
+   
+   HZ: HazardUnit port map(
+      ID_EX_MemRead  => ID_EX_MEM_READ,
+      ID_EX_RegRt    => ID_EX_REG_RT,
+      IF_ID_RegRs    => reg_rs,
+      IF_ID_RegRt    => reg_rt,
+      
+      STALL          => stall
+   );
 
 RF_READ : process (CLK, Reset)
 begin
@@ -267,59 +289,30 @@ begin
 	end if;
 end process;
 
-pipeline_control: process (
-			  Reset,
-			  In_PC,
-			  In_Instr,
-			  write_address,
-			  WriteData1,
-			  WriteData2,
-			  Mul_or_Div,
-			  RegWrite_in,
-			  ID_EX_MEM_READ,
-			  ID_EX_REG_RT)
-	variable hd_stall: std_logic; 
+pipeline_control: process (Reset)
 begin
-	if Reset = '1' then
+	if Reset = '1' and Stall = '1' then
 		RegWrite <= '0';
 		MemtoReg <= '0';
 		MemRead <='0'; 
 		MemWrite <='0'; 
 		RegDst <='0'; 
 		ALUop <="000"; 
-		ALUSrc <='0'; 
+		ALUSrc <='0';
+      ID_Stall <= '1';
 	else
-		if(ID_EX_MEM_READ = '1' and ((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt))) then
-			hd_stall:='1';
-			
-			RegWrite <= '0';
-			MemtoReg <= '0';
-			MemRead <='0'; 
-			MemWrite <='0'; 
-			RegDst <='0'; 
-			ALUop <="000"; 
-			ALUSrc <='0'; 
-			Instr_25to21 <= "00000";
-			Instr_20to16 <= "00000";
-			Instr_15to11 <= "00000";
-			Branch_Sign_extended <= X"00000000"; 	
-		else
-			hd_stall := '0';
-			
-			RegWrite <= RegWrite_out;
-			MemtoReg <= MemtoReg_out;
-			MemRead <= MemRead_out; 
-			MemWrite <= MemWrite_out;
-			RegDst <= RegDst_out; 
-			ALUOp <= ALUOp_out;
-			ALUSrc <= ALUSrc_out;
-			Instr_25to21 <= reg_rs;
-			Instr_20to16 <= reg_rt;
-			Instr_15to11 <= reg_rd;
-			Branch_Sign_extended <= Branch_PC;
-		end if;
-		
-		ID_Stall <= hd_stall;
+      RegWrite <= RegWrite_out;
+      MemtoReg <= MemtoReg_out;
+      MemRead <= MemRead_out; 
+      MemWrite <= MemWrite_out;
+      RegDst <= RegDst_out; 
+      ALUOp <= ALUOp_out;
+      ALUSrc <= ALUSrc_out;
+      Instr_25to21 <= reg_rs;
+      Instr_20to16 <= reg_rt;
+      Instr_15to11 <= reg_rd;
+      Branch_Sign_extended <= Branch_PC;
+      ID_Stall <= '0';
 	end if;
 end process;
 end Behavioral_Decoder;
