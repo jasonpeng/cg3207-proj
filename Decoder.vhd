@@ -78,7 +78,15 @@ architecture Behavioral_Decoder of Decoder is
 		RegAddr_1  : in STD_LOGIC_VECTOR(4 downto 0);
 		RegAddr_2  : in STD_LOGIC_VECTOR(4 downto 0);
 		RegData_1  : out STD_LOGIC_VECTOR(31 downto 0);
-		RegData_2  : out STD_LOGIC_VECTOR(31 downto 0)
+		RegData_2  : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_1 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_2 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_3 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_4 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_5 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_6 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_7 : out STD_LOGIC_VECTOR(31 downto 0);
+		Reg_8 : out STD_LOGIC_VECTOR(31 downto 0)
 	);
  end component;
  
@@ -118,7 +126,7 @@ architecture Behavioral_Decoder of Decoder is
 -- for data hazzard detection
    signal stall : std_logic;
 -- for control branch
-	signal Branch_PC:std_logic_vector(31 downto 0);
+	signal SignExtended:std_logic_vector(31 downto 0);
    signal Branch: std_logic;
 	signal Forward_c: std_logic;
 	signal Forward_d: std_logic;
@@ -134,7 +142,7 @@ begin
 
 	imm_value <= In_Instr(15 downto 0);
 	-- Read Register 1 Operation
-	Branch_PC <= X"0000" & imm_value when imm_value(15)= '0' 
+	SignExtended <= X"0000" & imm_value when imm_value(15)= '0' 
 							else	X"FFFF" & imm_value; 
 
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
@@ -167,7 +175,7 @@ begin
 --												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 
 	read_data_1 <= RegData_1_buff;
-	read_data_2 <= RegData_1_buff;
+	read_data_2 <= RegData_2_buff;
 
 	ctrl: control port map
 		(
@@ -190,7 +198,15 @@ begin
 		RegAddr_1  => RegAddr_1_buff,
 		RegAddr_2  => RegAddr_2_buff,
 		RegData_1  => RegData_1_buff,
-		RegData_2  => RegData_2_buff
+		RegData_2  => RegData_2_buff,
+		Reg_1 => Reg_S1,
+		Reg_2 => Reg_S2,
+		Reg_3 => Reg_S3,
+		Reg_4 => Reg_S4,
+		Reg_5 => Reg_S5,
+		Reg_6 => Reg_S6,
+		Reg_7 => Reg_S7,
+		Reg_8 => Reg_S8
 	);
    
    HZ: HazardUnit port map(
@@ -202,11 +218,14 @@ begin
       STALL          => stall
    );
 
-RF_READ : process (CLK, Reset)
+RF_READ : process (Reset, In_Instr, Opcode, EX_MEM_REG_RD, reg_rs, reg_rt)
 begin
 	if (Reset='1') then
-		null;
-	elsif rising_edge(CLK) then
+		RegAddr_1_buff <= "00000";
+		RegAddr_2_buff <= "00000";
+		cmp_result <= '0';
+		PCSrc <= '0';
+	else
 		-- CMP_A and CMP_B IN BEQ CASE
 		if (Forward_c = '1') then
 			RegAddr_1_buff <= EX_MEM_REG_RD;
@@ -231,9 +250,10 @@ begin
 	end if;
 end process;
 
-pipeline_control: process (Reset)
+pipeline_control: process (Reset, Stall, RegWrite_out, MemToReg_out, MemRead_out, MemWrite_out,
+	RegDst_out, ALUOp_out, ALUSrc_out, reg_rs, reg_rt, reg_rd, SignExtended)
 begin
-	if Reset = '1' and Stall = '1' then
+	if Reset = '1' OR Stall = '1' then
 		RegWrite <= '0';
 		MemtoReg <= '0';
 		MemRead <='0'; 
@@ -241,6 +261,10 @@ begin
 		RegDst <='0'; 
 		ALUop <="000"; 
 		ALUSrc <='0';
+      Instr_25to21 <= "00000";
+      Instr_20to16 <= "00000";
+      Instr_15to11 <= "00000";
+      Branch_Sign_extended <= (others => '0');
       ID_Stall <= '1';
 	else
       RegWrite <= RegWrite_out;
@@ -253,9 +277,10 @@ begin
       Instr_25to21 <= reg_rs;
       Instr_20to16 <= reg_rt;
       Instr_15to11 <= reg_rd;
-      Branch_Sign_extended <= Branch_PC;
+      Branch_Sign_extended <= SignExtended;
       ID_Stall <= '0';
 	end if;
 end process;
+	
 end Behavioral_Decoder;
 
