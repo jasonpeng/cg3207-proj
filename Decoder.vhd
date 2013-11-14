@@ -2,6 +2,64 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 
+entity RegisterFile is
+	Port (
+		CLK      : in STD_LOGIC;
+		RESET    : in STD_LOGIC;
+		RegWrite : in STD_LOGIC;
+		RegWriteAddr : in STD_LOGIC_VECTOR(4 downto 0);
+		RegWriteData : in STD_LOGIC_VECTOR(31 downto 0);
+		RegAddr_1  : in STD_LOGIC_VECTOR(4 downto 0);
+		RegAddr_2  : in STD_LOGIC_VECTOR(4 downto 0);
+		RegData_1  : out STD_LOGIC_VECTOR(31 downto 0);
+		RegData_2  : out STD_LOGIC_VECTOR(31 downto 0)
+	);
+end RegisterFile;
+
+architecture beh of RegisterFile is
+	TYPE rf is array (0 to 31) of std_logic_vector (31 downto 0);
+	signal rf_array: rf;
+begin
+-- write data from falling_edge
+process(CLK, RESET, RegWrite, RegWriteAddr, RegWriteData)
+	variable index_write : integer range 0 to 31;
+begin
+	if (RESET='1') then
+		for i in 0 to 31 loop
+			rf_array(i) <= (others => '0');
+		end loop;
+	elsif falling_edge(CLK) then
+		index_write := to_integer(unsigned(RegWriteAddr));	
+		if (RegWrite='1') then
+			rf_array(index_write) <= RegWriteData;
+		end if;
+	end if;
+end process;
+
+-- read data from rising edge
+process(CLK, RESET, RegAddr_1, RegAddr_2)
+	variable index_1 : integer range 0 to 31;
+	variable index_2 : integer range 0 to 31;
+begin
+	if (RESET='1') then
+		RegData_1 <= (others => 'Z');
+		RegData_2 <= (others => 'Z');
+	elsif rising_edge(CLK) then
+		index_1 := to_integer(unsigned(RegAddr_1));
+		index_2 := to_integer(unsigned(RegAddr_2));
+		RegData_1 <= rf_array(index_1);
+		RegData_2 <= rf_array(index_2);
+	end if;
+end process;
+end beh;
+------------
+------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+
 entity Decoder is
     Port ( 
 			  Clk : in std_logic;
@@ -68,9 +126,23 @@ architecture Behavioral_Decoder of Decoder is
 		ALUOp: out std_logic_vector(2 downto 0));
  end component;-- RegWrite internal signal
  
+ component RegisterFile
+	Port (
+		CLK      : in STD_LOGIC;
+		RESET    : in STD_LOGIC;
+		RegWrite : in STD_LOGIC;
+		RegWriteAddr : in STD_LOGIC_VECTOR(4 downto 0);
+		RegWriteData : in STD_LOGIC_VECTOR(31 downto 0);
+		RegAddr_1  : in STD_LOGIC_VECTOR(4 downto 0);
+		RegAddr_2  : in STD_LOGIC_VECTOR(4 downto 0);
+		RegData_1  : out STD_LOGIC_VECTOR(31 downto 0);
+		RegData_2  : out STD_LOGIC_VECTOR(31 downto 0)
+	);
+ end component;
+ 
 --	Registers 
-	TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
-	signal register_array: register_file;
+	--TYPE register_file is array (0 to 31) of std_logic_vector (31 downto 0);
+	--signal register_array: register_file;
 	alias opcode: std_logic_vector(5 downto 0) is In_Instr(31 downto 26);
 	alias reg_rs: std_logic_vector(4 downto 0) is In_Instr(25 downto 21);
 	alias reg_rt: std_logic_vector(4 downto 0) is In_Instr(20 downto 16);
@@ -99,6 +171,11 @@ architecture Behavioral_Decoder of Decoder is
 	signal cmp_A: std_logic_vector(31 downto 0);
 	signal cmp_B: std_logic_vector(31 downto 0);
 	signal cmp_result: std_logic;
+	
+	signal RegAddr_1_buff : std_logic_vector(4 downto 0);
+	signal RegAddr_2_buff : std_logic_vector(4 downto 0);
+	signal RegData_1_buff : std_logic_vector(31 downto 0);
+	signal RegData_2_buff : std_logic_vector(31 downto 0);
 begin
 
 	imm_value <= In_Instr(15 downto 0);
@@ -109,24 +186,14 @@ begin
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
 	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
 				else '0';
-	JumpPC <= register_array(to_integer(unsigned(reg_rs))) when (Opcode= "000000")
-		 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
+	--JumpPC <= register_array(to_integer(unsigned(reg_rs))) when (Opcode= "000000")
+	--	 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
+	JumpPC <= In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 --	-- for mul & div cases
 	register_low <= writedata1 when (Mul_or_Div = '1')
 					else x"00000000";
 	register_high <= writedata2 when (Mul_or_Div = '1')
 					else x"00000000";
--- check registers;
-	Reg_S1 <= register_array(1); 
-	Reg_S2 <= register_array(2); 
-	Reg_S3 <= register_array(3); 
-	Reg_S4 <= register_array(4); 
-	Reg_S5 <= register_array(5); 
-	Reg_S6 <= register_array(6); 
-	Reg_S7 <= register_array(7); 	
-	Reg_S8 <= register_array(8);
--- Data hazzard detection
-	
 	
 -- Branch Control hazards
 
@@ -138,23 +205,15 @@ begin
 					else '0';
 	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rt))
 					else '0';
-	-- CMP_A and CMP_B IN BEQ CASE
-	cmp_A <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_c = '1')
-			else register_array(to_integer(unsigned(reg_rs)));
-	cmp_B <= register_array(to_integer(unsigned(EX_MEM_REG_RD))) when (Forward_d = '1')
-			else register_array(to_integer(unsigned(reg_rt)));
-	cmp_result <= '1' when ((Opcode= "000100" and (cmp_A = cmp_B))		-- case for BEQ
-							or (In_Instr(31 downto 26)="000001" and (cmp_A(31) ='0'))) --case for BGEZ & BGEZAL
-					else '0';
-	PCSrc <= cmp_result and Branch; 
+
 --	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
 --								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
 	--	register_array(to_integer(unsigned(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
 --												else register_low when (Opcode="000000" and funct= "010010")	-- case mvlo
 --												else register_high when (Opcode= "000000" and funct= "010000"); -- case mvhi
 
-	read_data_1 <= register_array(to_integer(unsigned(reg_rs)));
-	read_data_2 <= register_array(to_integer(unsigned(reg_rt)));
+	read_data_1 <= RegData_1_buff;
+	read_data_2 <= RegData_1_buff;
 
 	ctrl: control port map
 		(
@@ -166,73 +225,102 @@ begin
 				MemRead => MemRead_out,
 				MemWrite => MemWrite_out,
 				ALUOp => ALUOp_out);
-	
-rf:process (Clk,Reset)
-	begin
-		if(Reset = '1') then 
-				for i in 0 to 31 loop
-					register_array(i) <= X"00000000";
-				end loop;
-		elsif(Clk'event and Clk = '1') then	
-			if(RegWrite_in = '1' and (write_address /= "00000") )then
-				register_array(to_integer(unsigned(write_address))) <= writedata1;
-				if(Opcode = "000000" and funct = "001001") then   	-- case jalr
-					register_array(to_integer(unsigned(reg_rd))) <= std_logic_vector(unsigned(In_PC) + x"00000004");
-				elsif	(Opcode="000000" and funct= "010010")	then					
-					register_array(to_integer(unsigned(reg_rd))) <=register_low ;-- case mvlo
-				elsif (Opcode= "000000" and funct= "010000") then
-					 register_array(to_integer(unsigned(reg_rd))) <= register_high ; -- case mvhi
-				end if;
-				if((cmp_result = '1' and Branch = '1' and (reg_rt = "10001")) or Opcode = "000011") then
-					register_array(31) <= std_logic_vector(unsigned(In_PC) + X"0000004");
-				end if;
-			end if;
+				
+	RF0 : RegisterFile port map (
+		CLK      => CLK,
+		RESET    => reset,
+		RegWrite => RegWrite_in,
+		RegWriteAddr => write_address,
+		RegWriteData => WriteData1,
+		RegAddr_1  => RegAddr_1_buff,
+		RegAddr_2  => RegAddr_2_buff,
+		RegData_1  => RegData_1_buff,
+		RegData_2  => RegData_2_buff
+	);
 
+RF_READ : process (CLK, Reset)
+begin
+	if (Reset='1') then
+		null;
+	elsif rising_edge(CLK) then
+		-- CMP_A and CMP_B IN BEQ CASE
+		if (Forward_c = '1') then
+			RegAddr_1_buff <= EX_MEM_REG_RD;
+		else 
+			RegAddr_1_buff <= reg_rs;
 		end if;
-	end process;
-	
-pipeline: process (Clk,Reset)
-variable hd_stall: std_logic; 
-		begin
-		if Reset = '1' then
-			  RegWrite <= '0';
-			  MemtoReg <= '0';
-           MemRead <='0'; 
-			  MemWrite <='0'; 
-           RegDst <='0'; 
-			  ALUop <="000"; 
-           ALUSrc <='0'; 
-		elsif rising_edge (Clk) then
-			if(ID_EX_MEM_READ = '1' and ((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt))) then
-				hd_stall:='1';
-			 	  RegWrite <= '0';
-				  MemtoReg <= '0';
-				  MemRead <='0'; 
-				  MemWrite <='0'; 
-				  RegDst <='0'; 
-				  ALUop <="000"; 
-				  ALUSrc <='0'; 
-				Instr_25to21 <= "00000";
-				Instr_20to16 <= "00000";
-				Instr_15to11 <= "00000";
-				Branch_Sign_extended <= X"00000000"; 	
-			 else
-				hd_stall := '0';
-				RegDst <= RegDst_out; 
-					ALUSrc <= ALUSrc_out; 
-					MemtoReg <= MemtoReg_out; 
-					RegWrite <= RegWrite_out; 
-					MemRead <= MemRead_out; 
-					MemWrite <= MemWrite_out;
-					ALUOp <= ALUOp_out;
-				Instr_25to21 <= reg_rs;
-				Instr_20to16 <= reg_rt;
-				Instr_15to11 <= reg_rd;
-				Branch_Sign_extended <= Branch_PC;
-				end if;
-				ID_Stall <= hd_stall;
+		
+		if (Forward_d = '1') then
+			RegAddr_2_buff <= EX_MEM_REG_RD;
+		else
+			RegAddr_2_buff <= reg_rt;
+		end if;
+		
+		if ((Opcode= "000100" and (RegData_1_buff = RegData_2_buff))		-- case for BEQ
+				or (In_Instr(31 downto 26)="000001" and (RegData_1_buff(31) ='0')))  then --case for BGEZ & BGEZAL
+			cmp_result <= '1';
+		else
+			cmp_result <= '0';
+		end if;
+		
+		PCSrc <= cmp_result and Branch;
+	end if;
+end process;
 
-				end if;
-	end process;
+pipeline_control: process (
+			  Reset,
+			  In_PC,
+			  In_Instr,
+			  write_address,
+			  WriteData1,
+			  WriteData2,
+			  Mul_or_Div,
+			  RegWrite_in,
+			  ID_EX_MEM_READ,
+			  ID_EX_REG_RT)
+	variable hd_stall: std_logic; 
+begin
+	if Reset = '1' then
+		RegWrite <= '0';
+		MemtoReg <= '0';
+		MemRead <='0'; 
+		MemWrite <='0'; 
+		RegDst <='0'; 
+		ALUop <="000"; 
+		ALUSrc <='0'; 
+	else
+		if(ID_EX_MEM_READ = '1' and ((ID_EX_REG_RT = reg_rs) or (ID_EX_REG_RT = reg_rt))) then
+			hd_stall:='1';
+			
+			RegWrite <= '0';
+			MemtoReg <= '0';
+			MemRead <='0'; 
+			MemWrite <='0'; 
+			RegDst <='0'; 
+			ALUop <="000"; 
+			ALUSrc <='0'; 
+			Instr_25to21 <= "00000";
+			Instr_20to16 <= "00000";
+			Instr_15to11 <= "00000";
+			Branch_Sign_extended <= X"00000000"; 	
+		else
+			hd_stall := '0';
+			
+			RegWrite <= RegWrite_out;
+			MemtoReg <= MemtoReg_out;
+			MemRead <= MemRead_out; 
+			MemWrite <= MemWrite_out;
+			RegDst <= RegDst_out; 
+			ALUOp <= ALUOp_out;
+			ALUSrc <= ALUSrc_out;
+			Instr_25to21 <= reg_rs;
+			Instr_20to16 <= reg_rt;
+			Instr_15to11 <= reg_rd;
+			Branch_Sign_extended <= Branch_PC;
+		end if;
+		
+		ID_Stall <= hd_stall;
+	end if;
+end process;
 end Behavioral_Decoder;
 
