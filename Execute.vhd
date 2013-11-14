@@ -72,6 +72,7 @@ entity Execute is
 		IN_ID_EX_Data1 : in  STD_LOGIC_VECTOR(31 downto 0); -- data1 from register
 		IN_ID_EX_Data2 : in  STD_LOGIC_VECTOR(31 downto 0); -- data2 from register
 
+		IN_ID_EX_MemWrite : in STD_LOGIC;
 		IN_ID_EX_RegDst : in STD_LOGIC; --selects writeback address
 		IN_ID_EX_Instr_25_21 : in STD_LOGIC_VECTOR(4 downto 0);
 		IN_ID_EX_Instr_20_16 : in STD_LOGIC_VECTOR(4 downto 0);
@@ -90,6 +91,7 @@ entity Execute is
 		OUT_EX_MM_Zero : out STD_LOGIC;
 		OUT_EX_MM_ALU_Result_1 : out STD_LOGIC_VECTOR(31 downto 0);
 		OUT_EX_MM_ALU_Result_2 : out STD_LOGIC_VECTOR(31 downto 0);
+		OUT_EX_MM_Data_2 : out STD_LOGIC_VECTOR(31 downto 0);
 		OUT_EX_MM_MULDIV : out STD_LOGIC;  -- asserts for mul/div results
 
 		OUT_EX_MM_RegWriteAddr : out STD_LOGIC_VECTOR(4 downto 0) -- register address
@@ -236,6 +238,15 @@ begin
 		B := IN_ID_EX_SignExtended;
 	else
 		B := (others => 'X');
+	end if;
+	
+	-- forwarding for SW
+	if (IN_EX_MM_RegWrite='1' AND IN_EX_MM_RD /= "00000") 
+		AND (IN_ID_EX_Instr_20_16 = IN_EX_MM_RD)
+		AND (IN_ID_EX_MemWrite = '1') then
+		OUT_EX_MM_Data_2 <= IN_EX_MM_ALU_Result;
+	else
+		OUT_EX_MM_Data_2 <= IN_ID_EX_Data2;
 	end if;
 	
 	shftamt := X"000000" & "000" & IN_ID_EX_SignExtended(10 downto 6);

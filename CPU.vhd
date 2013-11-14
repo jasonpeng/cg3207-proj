@@ -172,7 +172,8 @@ component Execute
         IN_ID_EX_ALUSrc        : in STD_LOGIC;
         IN_ID_EX_Data1         : in  STD_LOGIC_VECTOR(31 downto 0);
         IN_ID_EX_Data2         : in  STD_LOGIC_VECTOR(31 downto 0);
-
+		  
+		  IN_ID_EX_MemWrite      : in STD_LOGIC;
         IN_ID_EX_RegDst        : in STD_LOGIC;
         IN_ID_EX_Instr_25_21   : in STD_LOGIC_VECTOR(4 downto 0);
         IN_ID_EX_Instr_20_16   : in STD_LOGIC_VECTOR(4 downto 0);
@@ -191,6 +192,7 @@ component Execute
         OUT_EX_MM_Zero         : out STD_LOGIC;
         OUT_EX_MM_ALU_Result_1 : out STD_LOGIC_VECTOR(31 downto 0);
         OUT_EX_MM_ALU_Result_2 : out STD_LOGIC_VECTOR(31 downto 0);
+		  OUT_EX_MM_Data_2       : out STD_LOGIC_VECTOR(31 downto 0);
         OUT_EX_MM_MULDIV       : out STD_LOGIC;
 
         OUT_EX_MM_RegWriteAddr : out STD_LOGIC_VECTOR(4 downto 0)
@@ -353,6 +355,7 @@ signal EXO_BMI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
 signal EXO_BMI_Alu_Result_2  : STD_LOGIC_VECTOR(31 downto 0);
 signal EXO_BMI_MULDIV        : STD_LOGIC;
 signal EXO_BMI_WriteAddr     : STD_LOGIC_VECTOR( 4 downto 0);
+signal EXO_BMI_Data_2        : STD_LOGIC_VECTOR(31 downto 0);
 
 -- EX/MEM
 signal BMO_MMI_MemWrite      : STD_LOGIC;
@@ -520,6 +523,7 @@ IE: Execute Port Map (
         IN_ID_EX_Data2         => BEO_EXI_Data_2,
 
         -- register writeback
+		  IN_ID_EX_MemWrite      => BEO_EXI_MemWrite,
         IN_ID_EX_RegDst        => BEO_EXI_RegDst,
         IN_ID_EX_Instr_25_21   => BEO_EXI_Instru_25_21,
         IN_ID_EX_Instr_20_16   => BEO_EXI_Instru_20_16,
@@ -538,6 +542,7 @@ IE: Execute Port Map (
         OUT_EX_MM_Zero         => EXO_BMI_Zero,
         OUT_EX_MM_ALU_Result_1 => EXO_BMI_Alu_Result,
         OUT_EX_MM_ALU_Result_2 => EXO_BMI_Alu_Result_2,
+		  OUT_EX_MM_Data_2       => EXO_BMI_Data_2,
         OUT_EX_MM_MULDIV       => EXO_BMI_MULDIV,
 
         OUT_EX_MM_RegWriteAddr => EXO_BMI_WriteAddr
@@ -561,7 +566,7 @@ EXMM: EX_MEM_BUFF Port Map (
         IN_EX_ALU_Result_2   => EXO_BMI_Alu_Result_2,
         IN_EX_MULDIV         => EXO_BMI_MULDIV,
 
-        IN_EX_Data2          => BEO_EXI_Data_2,
+        IN_EX_Data2          => EXO_BMI_Data_2,
         IN_EX_REG_WriteAddr  => EXO_BMI_WriteAddr,
 
         OUT_MEM_MemWrite      => BMO_MMI_MemWrite,
