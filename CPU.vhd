@@ -4,22 +4,22 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity CPU is
     port (
         -- debug
-        Control    : IN  std_logic_vector( 5 downto 0);
-        Operand1   : IN  std_logic_vector(31 downto 0);
-        Operand2   : IN  std_logic_vector(31 downto 0);
-        Result1    : OUT std_logic_vector(31 downto 0);
-        Result2    : OUT std_logic_vector(31 downto 0);
-        Debug      : OUT std_logic_vector(31 downto 0);
+        Control  : IN  std_logic_vector( 5 downto 0);
+        Operand1 : IN  std_logic_vector(31 downto 0);
+        Operand2 : IN  std_logic_vector(31 downto 0);
+        Result1  : OUT std_logic_vector(31 downto 0);
+        Result2  : OUT std_logic_vector(31 downto 0);
+        Debug    : OUT std_logic_vector(31 downto 0);
         -- cpu
-		  REG1					  : out std_logic_vector(31 downto 0);
-		  REG2					  : out std_logic_vector(31 downto 0);
-		  REG3					  : out std_logic_vector(31 downto 0);
-		  REG4					  : out std_logic_vector(31 downto 0);
-		  REG5					  : out std_logic_vector(31 downto 0);
-		  REG6					  : out std_logic_vector(31 downto 0);
-		  REG7					  : out std_logic_vector(31 downto 0);
-		  REG8					  : out std_logic_vector(31 downto 0);
-		  ALU_OP					  : out std_logic_vector(2 downto 0);
+        REG1     : out std_logic_vector(31 downto 0);
+        REG2     : out std_logic_vector(31 downto 0);
+        REG3     : out std_logic_vector(31 downto 0);
+        REG4     : out std_logic_vector(31 downto 0);
+        REG5     : out std_logic_vector(31 downto 0);
+        REG6     : out std_logic_vector(31 downto 0);
+        REG7     : out std_logic_vector(31 downto 0);
+        REG8     : out std_logic_vector(31 downto 0);
+        ALU_OP   : out std_logic_vector(2 downto 0);
         Clk, Reset : IN  std_logic
     );
 end CPU;
@@ -248,11 +248,8 @@ component DataMemory
         -- alu related
         IN_EX_MM_ALU_Result        : in STD_LOGIC_VECTOR(31 downto 0);
         IN_EX_MM_Data2             : in STD_LOGIC_VECTOR(31 downto 0);
-        IN_EX_MM_REG_WriteAddr     : in STD_LOGIC_VECTOR(4 downto 0);
 
-        OUT_MM_WB_Data             : out  STD_LOGIC_VECTOR(31 downto 0);
-        OUT_MM_WB_ALU_Result       : out STD_LOGIC_VECTOR(31 downto 0);
-        OUT_MM_WB_REG_WriteAddr    : out STD_LOGIC_VECTOR(4 downto 0)
+        OUT_MM_WB_Data             : out  STD_LOGIC_VECTOR(31 downto 0)
     );
 end component;
 
@@ -368,8 +365,6 @@ signal BMO_MMI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 
 -- MEM
 signal MMO_BWI_Data          : STD_LOGIC_VECTOR(31 downto 0);
-signal MMO_BWI_Alu_Result    : STD_LOGIC_VECTOR(31 downto 0);
-signal MMO_BWI_Reg_WriteAddr : STD_LOGIC_VECTOR(4 downto 0);
 
 -- MEM/WB
 signal BWO_WBI_MemToReg      : STD_LOGIC;
@@ -401,8 +396,8 @@ IFF: Fetch Port MAP (
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-       
-		 IF_ID_Flush     => IFO_Flush
+        PC_out_4        => Result1,
+        IF_ID_Flush     => IFO_Flush
     );
 
 -- IF_ID_BUFF
@@ -591,11 +586,8 @@ MM: DataMemory Port Map (
 
         IN_EX_MM_ALU_Result    => BMO_MMI_Alu_Result,
         IN_EX_MM_Data2         => BMO_MMI_Data,
-        IN_EX_MM_REG_WriteAddr => BMO_MMI_Reg_WriteAddr,
 
-        OUT_MM_WB_Data           => MMO_BWI_Data,
-        OUT_MM_WB_ALU_Result     => MMO_BWI_Alu_Result,
-        OUT_MM_WB_REG_WriteAddr  => MMO_BWI_Reg_WriteAddr
+        OUT_MM_WB_Data           => MMO_BWI_Data
     );
 
 -- MEM_WB_BUFF
@@ -605,10 +597,10 @@ MMWB: MEM_WB_BUFF Port Map (
 
         IN_MemToReg           => BMO_MMI_MemToReg,
         IN_DataMemory_Result  => MMO_BWI_Data,
-        IN_ALU_Result         => MMO_BWI_Alu_Result,
+        IN_ALU_Result         => BMO_MMI_Alu_Result,
         IN_ALU_Result_2       => BMO_BWI_Alu_Result_2,
         IN_MUL_DIV            => BMO_BWI_MULDIV,
-        IN_REG_WriteAddr      => MMO_BWI_Reg_WriteAddr,
+        IN_REG_WriteAddr      => BMO_MMI_Reg_WriteAddr,
         IN_RegWrite           => BMO_BWI_RegWrite,
 
         OUT_MemToReg          => BWO_WBI_MemToReg,
@@ -630,17 +622,18 @@ WB: WriteBack Port Map (
         OUT_Reg_WriteAddr    => WBO_IDI_WriteAddr,
         OUT_Reg_Data         => WBO_IDI_WriteData
    );
+
 --
-	result1 <= IFO_Instr;
-	result2<= IFO_PC_Addr;
-	ALU_op <= IDO_BEI_ALU_Op;
-	REG1	<= ID_REG1;
-	REG2	<= ID_REG2;				  
-	REG3	<= ID_REG3;				  
-   REG4 <= ID_REG4;
-   REG5	<=ID_REG5;				 
-   REG6	 <= ID_REG6;				  
-   REG7	<=ID_REG7;		 
-  	REG8<=ID_REG8;
+result1 <= IFO_Instr;
+result2 <= IFO_PC_Addr;
+ALU_op  <= IDO_BEI_ALU_Op;
+REG1    <= ID_REG1;
+REG2    <= ID_REG2;
+REG3    <= ID_REG3;
+REG4    <= ID_REG4;
+REG5    <= ID_REG5;
+REG6    <= ID_REG6;
+REG7    <= ID_REG7;
+REG8    <= ID_REG8;
 
 end Behavioral;
