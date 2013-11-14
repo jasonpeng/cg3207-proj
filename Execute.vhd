@@ -204,6 +204,7 @@ process(
 		)
 	
 	variable A : STD_LOGIC_VECTOR(31 downto 0); -- op1 for ALU
+	variable B0 : STD_LOGIC_VECTOR(31 downto 0);
 	variable B : STD_LOGIC_VECTOR(31 downto 0); -- op2 for ALU
 	variable shftamt : STD_LOGIC_VECTOR(31 downto 0); -- shift amount
 	variable R_funct : STD_LOGIC_VECTOR(5 downto 0); -- ALU R type funct (Instr[5-0])
@@ -219,14 +220,20 @@ begin
 		when others => A := (others => 'X');
 	end case;
 	
-	if (FWU_B="00" AND IN_ID_EX_ALUSrc='0') then
-		B := IN_ID_EX_Data2;
-	elsif (FWU_B="00" AND IN_ID_EX_ALUSrc='1') then
-		B := IN_ID_EX_SignExtended;
+	if (FWU_B="00") then
+		B0 := IN_ID_EX_Data2;
 	elsif (FWU_B="01") then
-		B := IN_EX_MM_ALU_Result;
+		B0 := IN_EX_MM_ALU_Result;
 	elsif (FWU_B="10") then
-		B := IN_WB_Reg_Data;
+		B0 := IN_WB_Reg_Data;
+	else
+		B0 := (others => 'X');
+	end if;
+	
+	if (IN_ID_EX_ALUSrc='0') then
+		B := B0;
+	elsif (IN_ID_EX_ALUSrc='1') then
+		B := IN_ID_EX_SignExtended;
 	else
 		B := (others => 'X');
 	end if;
