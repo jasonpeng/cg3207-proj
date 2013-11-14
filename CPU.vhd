@@ -398,7 +398,6 @@ IFF: Fetch Port MAP (
 
         Instruction     => IFO_Instr,
         PC_out          => IFO_PC_Addr,
-        PC_out_4        => Result1,
         IF_ID_Flush     => IFO_Flush
     );
 
