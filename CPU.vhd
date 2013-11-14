@@ -50,7 +50,9 @@ component IF_ID_REG
         Clk          : in STD_LOGIC;
         Reset        : in STD_LOGIC;
 
+        ID_STALL     : in std_logic;
         IF_ID_FLUSH  : in std_logic;
+        
         PC_ADDR_IN   : in STD_LOGIC_VECTOR(31 downto 0);
         INST_REG_IN  : in STD_LOGIC_VECTOR(31 downto 0);
 
@@ -405,6 +407,7 @@ IFID: IF_ID_REG Port MAP (
         Clk            => Clk,
         Reset          => Reset,
 
+        ID_STALL       => IDO_IFI_STALL,
         IF_ID_FLUSH    => IFO_Flush,
         PC_ADDR_IN     => IFO_PC_Addr,
         INST_REG_IN    => IFO_Instr,
