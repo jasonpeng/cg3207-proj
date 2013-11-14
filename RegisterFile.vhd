@@ -49,7 +49,7 @@ begin
 		end loop;
 	else
 		index_write := to_integer(unsigned(RegWriteAddr));	
-		if (RegWrite='1') then
+		if (RegWrite='1' AND index_write /= 0) then
 			rf_array(index_write) <= RegWriteData;
 		end if;
 	end if;
