@@ -27,14 +27,14 @@ begin
 		AND (EX_MM_RD /= "00000")
 		AND (EX_MM_RD = ID_EX_RS)
 		) then
-		FW_A <= "10";
+		FW_A <= "01";
 	elsif ( MM_WB_RegWrite = '1'	
 		AND (MM_WB_RD /= "00000")
-		AND (NOT (EX_MM_RegWrite = '1' AND (EX_MM_RD /= "00000")))
+		--AND (NOT (EX_MM_RegWrite = '1' AND (EX_MM_RD /= "00000")))
 			AND (EX_MM_RD /= ID_EX_RS)
 		AND (MM_WB_RD = ID_EX_RS)
 		) then
-		FW_A <= "01";
+		FW_A <= "10";
 	else
 		FW_A <= "00";
 	end if;
@@ -43,14 +43,14 @@ begin
 		AND (EX_MM_RD /= "00000")
 		AND (EX_MM_RD = ID_EX_RT)
 		) then
-		FW_B <= "10";
+		FW_B <= "01";
 	elsif ( MM_WB_RegWrite = '1'	
 		AND (MM_WB_RD /= "00000")
-		AND (NOT (EX_MM_RegWrite = '1' AND (EX_MM_RD /= "00000")))
+		--AND (NOT (EX_MM_RegWrite = '1' AND (EX_MM_RD /= "00000")))
 			AND (EX_MM_RD /= ID_EX_RT)
 		AND (MM_WB_RD = ID_EX_RT)
 		) then
-		FW_B <= "01";
+		FW_B <= "10";
 	else
 		FW_B <= "00";
 	end if;
