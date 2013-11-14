@@ -18,7 +18,7 @@ alias InstrOp : std_logic_vector(5 downto 0) is Instr(31 downto 26);
 alias Instrbit20: std_logic is Instr(20);
 alias Funct: std_logic_vector(5 downto 0) is Instr(5 downto 0);
 begin
-			RegDst <= '1' when (InstrOp = "000000" )		-- case R format
+			RegDst <= '1' when (InstrOp = "000000" ) AND (Instr /= X"00000000")		-- case R format
 				  else '0';											-- other cases, like lw, lui, ori
 			ALUSrc <= '1' when (InstrOp = "100011" or InstrOp = "101011" 
 								or InstrOp = "001101" or InstrOp = "001111"
@@ -27,10 +27,11 @@ begin
 				  else '0';																  -- case R-format and beq
 			MemtoReg <= '1' when (InstrOp = "100011")							  -- case lw
 					 else '0';																-- case for others
-			RegWrite <= '1' when (InstrOp = "000000" or InstrOp = "100011" 	-- case R format or case LW
+			RegWrite <= '1' when ((InstrOp = "000000" or InstrOp = "100011" 	-- case R format or case LW
 										or InstrOp = "001101" or InstrOp = "001111"	-- case for ori or case LUI
 										or InstrOp = "001010"							 -- case for slti
-										or InstrOp = "001000")						 -- case for addi
+										or InstrOp = "001000"						 -- case for addi
+										) AND (Instr /= X"00000000"))
 							else '0';-- case SW and BEQ
 					 
 			MemRead  <= '1' when (InstrOp = "100011")								-- case for lw
