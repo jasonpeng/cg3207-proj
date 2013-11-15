@@ -7,6 +7,7 @@
 --------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 entity shift is
 Port (  Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
@@ -61,21 +62,7 @@ begin
                 Temp := X"0000" & Temp(31 downto 16);
             end if;
         else -- arithmetic
-            if Operand2(0) = '1' then
-                Temp := '1' & Temp(31 downto 1);
-            end if;
-            if Operand2(1) = '1' then
-                Temp := "11" & Temp(31 downto 2);
-            end if;
-            if Operand2(2) = '1' then
-                Temp := X"F" & Temp(31 downto 4);
-            end if;
-            if Operand2(3) = '1' then
-                Temp := X"FF" & Temp(31 downto 8);
-            end if;
-            if Operand2(4) = '1' then
-                Temp := X"FFFF" & Temp(31 downto 16);
-            end if;
+            Temp := std_logic_vector(shift_right(signed(Operand1), to_integer(unsigned(Operand2(4 downto 0)))));
         end if;
     end if;
 

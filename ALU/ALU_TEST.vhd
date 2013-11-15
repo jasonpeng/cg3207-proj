@@ -96,7 +96,13 @@ BEGIN
 		wait for 100 ns;
 		Operand1 <= X"00000009";
 		Operand2 <= X"00000002";
-      wait;
+      
+		wait for 100 ns;
+		Control <= "001011"; -- sra
+		Operand1 <= X"000000F0";
+		Operand2 <= X"00000002";
+		
+		wait;
    end process;
 
 END;
