@@ -109,8 +109,8 @@ architecture Behavioral_Decoder of Decoder is
 	alias reg_rt: std_logic_vector(4 downto 0) is In_Instr(20 downto 16);
 	alias reg_rd: std_logic_vector(4 downto 0) is In_Instr(15 downto 11);
 	alias funct: std_logic_vector(5 downto 0) is In_Instr(5 downto 0);
-	signal register_low: std_logic_vector(31 downto 0);
-	signal register_high: std_logic_vector(31 downto 0);
+--	signal register_low: std_logic_vector(31 downto 0);
+--	signal register_high: std_logic_vector(31 downto 0);
 	signal imm_value : std_logic_vector (15 downto 0);
 	
 -- 
@@ -152,10 +152,10 @@ begin
 	--	 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 	JumpPC <= In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 --	-- for mul & div cases
-	register_low <= writedata1 when (Mul_or_Div = '1')
-					else x"00000000";
-	register_high <= writedata2 when (Mul_or_Div = '1')
-					else x"00000000";
+--	register_low <= writedata1 when (Mul_or_Div = '1')
+--					else x"00000000";
+--	register_high <= writedata2 when (Mul_or_Div = '1')
+--					else x"00000000";
 	
 -- Branch Control hazards
 

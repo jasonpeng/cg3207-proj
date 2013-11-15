@@ -89,69 +89,69 @@ end beh_arithmetic;
 -- 0,11,010 DIV
 -- 0,11,011 DIVU
 --------------------------------------------------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-
-entity complexop is
-Port (
-      Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
-		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
-		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
-		Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
-		Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
-		Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
-      Done        : out   STD_LOGIC);
-end complexop;
-
-architecture beh_complexop of complexop is
-	component Multiply is
-	port(
-       Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
-		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
-		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
-		 Result1_a	: out	STD_LOGIC_VECTOR (31 downto 0);
-		 Result2_a	: out	STD_LOGIC_VECTOR (31 downto 0);
-       Done_a     : out   STD_LOGIC
-	);
-    end component;
-
-	component divider is
-	port (
-		  Control_a: in std_logic_vector(2 downto 0);
-        dividend_i	: in  std_logic_vector(31 downto 0);
-        divisor_i	: in  std_logic_vector(31 downto 0);
-        quotient_o	: out std_logic_vector(31 downto 0); 
-        remainder_o	: out std_logic_vector(31 downto 0);
-        done_b		: out std_logic;
-        debug_b :	out std_logic_vector(27 downto 0)
-    );	
-    end component;
-
-    signal mul_result1 :  std_logic_vector (31 downto 0);
-    signal mul_result2 : std_logic_vector (31 downto 0);
-    signal div_quotient: std_logic_vector (31 downto 0);
-    signal div_remainder: std_logic_vector (31 downto 0);
-
-    signal done_mul: std_logic;
-    signal done_div: std_logic;
-    signal debug_s : std_logic_vector(27 downto 0);
-begin
-	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
-	DIVIDER_part: divider port map (Control,Operand1, Operand2, div_quotient, div_remainder, done_div,debug_s);
-	
-	Result1 <= mul_result1 when (Control(1)='0')
-				 else div_quotient when (Control(1) ='1' and done_div ='1')
-				 else (others => 'Z');
-	Result2 <= mul_result2 when (Control(1)='0')
-				 else div_remainder when (Control(1) ='1' and done_div ='1')
-				 else (others => 'Z');
-   Debug <= debug_s when (Control(1) = '1')
-		else (others => '0');
-	Done <=  done_mul when (Control(1) ='0')
-				else done_div when(Control(1) ='1')
-            else '0';
-
-end beh_complexop;
+--library ieee;
+--use ieee.std_logic_1164.all;
+--
+--entity complexop is
+--Port (
+--      Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
+--		Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
+--		Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
+--		Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
+--		Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
+--		Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
+--      Done        : out   STD_LOGIC);
+--end complexop;
+--
+--architecture beh_complexop of complexop is
+--	component Multiply is
+--	port(
+--       Control_a	: in	STD_LOGIC_VECTOR ( 2 downto 0);
+--		 Operand1_a	: in	STD_LOGIC_VECTOR (31 downto 0);
+--		 Operand2_a	: in	STD_LOGIC_VECTOR (31 downto 0);
+--		 Result1_a	: out	STD_LOGIC_VECTOR (31 downto 0);
+--		 Result2_a	: out	STD_LOGIC_VECTOR (31 downto 0);
+--       Done_a     : out   STD_LOGIC
+--	);
+--    end component;
+--
+--	component divider is
+--	port (
+--		  Control_a: in std_logic_vector(2 downto 0);
+--        dividend_i	: in  std_logic_vector(31 downto 0);
+--        divisor_i	: in  std_logic_vector(31 downto 0);
+--        quotient_o	: out std_logic_vector(31 downto 0); 
+--        remainder_o	: out std_logic_vector(31 downto 0);
+--        done_b		: out std_logic;
+--        debug_b :	out std_logic_vector(27 downto 0)
+--    );	
+--    end component;
+--
+--    signal mul_result1 :  std_logic_vector (31 downto 0);
+--    signal mul_result2 : std_logic_vector (31 downto 0);
+--    signal div_quotient: std_logic_vector (31 downto 0);
+--    signal div_remainder: std_logic_vector (31 downto 0);
+--
+--    signal done_mul: std_logic;
+--    signal done_div: std_logic;
+--    signal debug_s : std_logic_vector(27 downto 0);
+--begin
+--	MULTIPLIER: multiply port map (Control,Operand1,Operand2,mul_result1,mul_result2,done_mul);
+--	DIVIDER_part: divider port map (Control,Operand1, Operand2, div_quotient, div_remainder, done_div,debug_s);
+--	
+--	Result1 <= mul_result1 when (Control(1)='0')
+--				 else div_quotient when (Control(1) ='1' and done_div ='1')
+--				 else (others => 'Z');
+--	Result2 <= mul_result2 when (Control(1)='0')
+--				 else div_remainder when (Control(1) ='1' and done_div ='1')
+--				 else (others => 'Z');
+--   Debug <= debug_s when (Control(1) = '1')
+--		else (others => '0');
+--	Done <=  done_mul when (Control(1) ='0')
+--				else done_div when(Control(1) ='1')
+--            else '0';
+--
+--end beh_complexop;
 
 --------------------------------------------------------------------------
 -- ALU main
@@ -212,16 +212,16 @@ architecture Behavioral of alu is
             Debug		: out	STD_LOGIC_VECTOR (27 downto 0));
     end component;
 
-    component complexop
-    Port (
-            Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
-            Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
-            Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
-            Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
-            Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
-            Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
-            Done        : out   STD_LOGIC);
-    end component;
+--    component complexop
+--    Port (
+--            Control		: in	STD_LOGIC_VECTOR ( 2 downto 0);
+--            Operand1	: in	STD_LOGIC_VECTOR (31 downto 0);
+--            Operand2	: in	STD_LOGIC_VECTOR (31 downto 0);
+--            Result1		: out	STD_LOGIC_VECTOR (31 downto 0);
+--            Result2		: out	STD_LOGIC_VECTOR (31 downto 0);
+--            Debug		: out	STD_LOGIC_VECTOR (27 downto 0);
+--            Done        : out   STD_LOGIC);
+--    end component;
     
     signal OpDone : std_logic;    
     signal OpType : std_logic_vector(2 downto 0);
@@ -246,10 +246,10 @@ architecture Behavioral of alu is
     signal AFlags  : std_logic_vector(27 downto 0);
     signal OAFlags : std_logic_vector(31 downto 0);
     -- complexop
-    signal COutput1: std_logic_vector(31 downto 0);
-    signal COutput2: std_logic_vector(31 downto 0);
-    signal CFlags  : std_logic_vector(27 downto 0);
-    signal OCFlags : std_logic_vector(31 downto 0);
+--    signal COutput1: std_logic_vector(31 downto 0);
+--    signal COutput2: std_logic_vector(31 downto 0);
+--    signal CFlags  : std_logic_vector(27 downto 0);
+--    signal OCFlags : std_logic_vector(31 downto 0);
 begin
 
 --------------------------------------------------------------------------
@@ -299,33 +299,36 @@ SF: shift port map(OpCode, Input1, Input2, SOutput1, SOutput2, SFlags);
 -- arithmetics operations
 AR: arithmetic port map(OpCode, Input1, Input2, AOutput1, AOutput2, AFlags);
 -- complex operations
-CO: complexop port map(OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
+--CO: complexop port map(OpCode, Input1, Input2, COutput1, COutput2, CFlags, OpDone);
 
 -- multiplex output
 R1: multiplexer port map(X"00000000", -- reset
                          LOutput1, -- logic
                          SOutput1, -- shift
                          AOutput1, -- arithmetic
-                         COutput1, -- long cycles
+                         --COutput1, -- long cycles
+                         X"00000000",
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Result1);
 R2: multiplexer port map(X"00000000", -- reset
                          LOutput2, -- logic
                          SOutput2, -- shift
                          AOutput2, -- arithmetic
-                         COutput2, -- long cycles
+                         --COutput2, -- long cycles
+                         X"00000000",
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Result2);
 -- concatentae flags
 OLFlags <= OpFlag & LFlags;
 OSFlags <= OpFlag & SFlags;
 OAFlags <= OpFlag & AFlags;
-OCFlags <= OpFlag & CFlags;
+--OCFlags <= OpFlag & CFlags;
 DB: multiplexer port map(X"00000000", -- reset
                          OLFlags, -- logic
                          OSFlags, -- shift
                          OAFlags, -- arithmetic
-                         OCFlags, -- complex
+                         --OCFlags, -- complex
+                         X"00000000",
                          X"00000000", X"00000000", X"00000000", 
                          OpType, Debug);
 

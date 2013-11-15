@@ -307,7 +307,6 @@ signal DBO_IDI_PC_Addr  : std_logic_vector(31 downto 0);
 -- ID
 signal IDO_BEI_RegWrite      : std_logic;
 signal IDO_BEI_MemToReg      : std_logic;
-signal IDO_BEI_Branch        : std_logic;
 signal IDO_BEI_MemRead       : std_logic;
 signal IDO_BEI_MemWrite      : std_logic;
 signal IDO_BEI_RegDst        : std_logic;
@@ -341,7 +340,6 @@ signal BEO_EXI_RegDst        : STD_LOGIC;
 signal BEO_EXI_Instru_25_21  : STD_LOGIC_VECTOR(4 downto 0);
 signal BEO_EXI_Instru_20_16  : STD_LOGIC_VECTOR(4 downto 0);
 signal BEO_EXI_Instru_15_11  : STD_LOGIC_VECTOR(4 downto 0);
-signal BEO_EXI_PC_Addr       : STD_LOGIC_VECTOR(31 downto 0);
 signal BEO_EXI_Branch_Extend : STD_LOGIC_VECTOR(31 downto 0);
 signal BEO_EXI_MemWrite      : STD_LOGIC;
 signal BEO_EXI_MemToReg      : STD_LOGIC;

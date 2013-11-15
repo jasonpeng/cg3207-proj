@@ -96,8 +96,9 @@ use ieee.std_logic_unsigned.all;
 
 entity ram_instr is
 port (
-      ADDR : in std_logic_vector(31 downto 0);
-      DATA : out std_logic_vector(31 downto 0));
+   ADDR : in std_logic_vector(31 downto 0);
+   DATA : out std_logic_vector(31 downto 0)
+);
 end ram_instr;
 
 architecture syn of ram_instr is
@@ -108,8 +109,6 @@ architecture syn of ram_instr is
 	 x"00000000",x"8c060008",x"0086382a",x"28480004",X"00000000",x"00022840",x"00000000",x"00000000",
 	 x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",
 	 x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
-
 begin
- -- currently just 8 instructions, after conversion, the value of ADDR should not bigger than 7
 	 DATA <= ROM(conv_integer(ADDR));
 end syn;
