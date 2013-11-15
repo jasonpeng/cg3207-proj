@@ -42,7 +42,7 @@ begin
 	 if RESET = '1' then 
 	  INST_REG_OUT <= (others => '0');
 	  PC_ADDR_OUT <= (others => '0');
-	 elsif rising_edge(CLK) then 
+	 elsif (Clk'event and Clk ='1') then 
 	  if IF_ID_FLUSH = '1' then
 			INST_REG_OUT <= (others =>'0');
 			PC_ADDR_OUT <= (others =>'0');

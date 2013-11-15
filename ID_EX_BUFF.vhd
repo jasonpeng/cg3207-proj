@@ -95,7 +95,7 @@ begin
 	  OUT_EX_MemToReg			<=		'0';
 	  OUT_EX_MemRead			<=		'0';
 	  OUT_EX_RegWrite			<=		'0';
-	elsif rising_edge(CLK) then
+	elsif(Clk'event and Clk='1') then
 	  OUT_EX_ALUOp 			<=		IN_ID_ALUop;
 	  OUT_EX_SignExtended 	<=		IN_ID_SignExtended;
 	  OUT_EX_ALUSrc 			<=		IN_ID_ALUSrc;

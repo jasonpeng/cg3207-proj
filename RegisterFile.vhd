@@ -49,14 +49,14 @@ Reg_7 <= rf_array(7);
 Reg_8 <= rf_array(8);
 
 -- write data at rising_edge
-process(RESET, RegWrite, RegWriteAddr, RegWriteData)
+process(Clk,RESET, RegWrite, RegWriteAddr, RegWriteData)
 	variable index_write : integer range 0 to 31;
 begin
 	if (RESET='1') then
 		for i in 0 to 31 loop
 			rf_array(i) <= (others => '0');
 		end loop;
-	else
+	elsif(Clk'event and Clk = '1') then
 		index_write := to_integer(unsigned(RegWriteAddr));	
 		if (RegWrite='1' AND index_write /= 0) then
 			rf_array(index_write) <= RegWriteData;
@@ -65,14 +65,14 @@ begin
 end process;
 
 -- read data at falling_edge
-process(CLK, RESET, RegAddr_1, RegAddr_2)
+process(RESET, RegAddr_1, RegAddr_2)
 	variable index_1 : integer range 0 to 31;
 	variable index_2 : integer range 0 to 31;
 begin
 	if (RESET='1') then
 		RegData_1 <= (others => 'Z');
 		RegData_2 <= (others => 'Z');
-	elsif falling_edge(CLK) then
+	else
 		index_1 := to_integer(unsigned(RegAddr_1));
 		index_2 := to_integer(unsigned(RegAddr_2));
 		RegData_1 <= rf_array(index_1);

@@ -43,7 +43,7 @@ process(CLK)
 begin
         rw := IN_EX_MM_MemRead & IN_EX_MM_MemWrite;
         address := to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 0)));
-        
+  
         case rw is
                 when "01" => -- write
                         ram(address+3) <= IN_EX_MM_Data2(31 downto 24);

@@ -631,8 +631,9 @@ WB: WriteBack Port Map (
    );
 
 --
-result1 <= IFO_Instr;
-result2 <= IFO_PC_Addr;
+result1 <= ID_REG2;
+result2 <= ID_REG3;
+debug   <= ID_REG8;
 ALU_op  <= IDO_BEI_ALU_Op;
 REG1    <= ID_REG1;
 REG2    <= ID_REG2;
