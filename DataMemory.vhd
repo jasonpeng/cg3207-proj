@@ -37,7 +37,7 @@ architecture Behavioral of DataMemory is
    signal address: integer;
 begin
 
-address <= to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 0)));
+address <= to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 2)));
 
 OUT_MM_WB_Data <= ram(address) when IN_EX_MM_MemRead = '1' else (others => 'Z');
 
