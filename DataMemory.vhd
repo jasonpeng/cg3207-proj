@@ -48,14 +48,15 @@ end DataMemory;
 architecture Behavioral of DataMemory is
 	type ram_type is array(0 to 31) of STD_LOGIC_VECTOR(7 downto 0);
 	
-	signal ram : ram_type := (	x"0a", x"02", x"00", x"00", 
-										x"0b", x"0c", x"00", x"00", 
-										x"0c", x"00", x"00", x"00", 
-										x"00", x"00", x"00", x"00", 
-										x"00", x"00", x"00", x"00",
-										x"00", x"00", x"00", x"00",
-										x"00", x"00", x"00", x"00",
-										x"00", x"00", x"00", x"00" );
+	signal ram : ram_type := (
+		x"00", x"00", x"00", x"00", 
+		x"01", x"00", x"00", x"00", 
+		x"02", x"00", x"00", x"00", 
+		x"03", x"00", x"00", x"00", 
+		x"04", x"00", x"00", x"00",
+		x"05", x"00", x"00", x"00",
+		x"06", x"00", x"00", x"00",
+		x"07", x"00", x"00", x"00" );
 begin
 
 process(CLK)
