@@ -631,7 +631,7 @@ WB: WriteBack Port Map (
    );
 
 --
-result1 <= ID_REG2 when;
+result1 <= ID_REG2;
 result2 <= ID_REG3;
 debug   <= ID_REG8;
 ALU_op  <= IDO_BEI_ALU_Op;
