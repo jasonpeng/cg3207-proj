@@ -96,23 +96,34 @@ use ieee.std_logic_unsigned.all;
 
 entity ram_instr is
 port (
-      ADDR : in std_logic_vector(31 downto 0);
-      DATA : out std_logic_vector(31 downto 0));
+   ADDR : in std_logic_vector(31 downto 0);
+   DATA : out std_logic_vector(31 downto 0)
+);
 end ram_instr;
 
 architecture syn of ram_instr is
-    type rom_type is array (0 to 35) of std_logic_vector (31 downto 0);  
+    type rom_type is array (0 to 63) of std_logic_vector (31 downto 0);  
+    
 	 -- currently, set 0-6 for test purpose
     CONSTANT ROM : rom_type := (
-	 x"00000000",x"3c020004",x"34630000",x"8c640004",x"00822822",x"00813024",x"00813825",x"00814026",
-	 x"00000000",x"00834022",x"00000000",x"ac050000",
-	 X"00000000",
-x"00000000",x"00834022",x"00000000",x"ac050000",
-x"00000000",x"00000000",x"00000000",x"8c080000",
-x"00000000",x"00000000",x"00000000",x"0800001d",x"00000000",x"00000000",x"00000000",x"00000000",
-x"0022402a",x"116cffe3",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+       x"35090001",x"350a0002",x"01494820",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       X"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000",
+       x"00000000",x"00000000",x"00000000",x"00000000"
+    );
 
 begin
- -- currently just 8 instructions, after conversion, the value of ADDR should not bigger than 7
-	 DATA <= ROM(conv_integer(ADDR));
+	 DATA <= ROM(conv_integer(ADDR(5 downto 0)));
 end syn;
