@@ -70,7 +70,10 @@ begin
 
 ADDSUB: addsub_lookahead port map (Control, Operand1, Operand2, Output1, Output2, Oflags);
 
-Result1 <= Output1;
+Result1 <= Output1 when (Control /= "110") else
+	X"00000000" when (Control = "110" AND Output1(31)='0') else
+	X"00000001" when (Control = "110" AND Output1(31)='1') else
+	(others => 'X');
            
 Result2 <= Output2 when Control(2) = '0' else X"00000000";
 
