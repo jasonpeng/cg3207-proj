@@ -95,6 +95,7 @@ component Decoder
         --JUMP
         Jump                 : OUT STD_LOGIC;
         JumpPC               : OUT STD_LOGIC_VECTOR(31 DOWNTO 0 );
+		  BranchPC : OUT STD_LOGIC_VECTOR(31 downto 0);
         --Decode
         EX_MEM_REG_RD        : in std_logic_vector(4 downto 0);
         Branch_Sign_Extended : out std_logic_vector(31 downto 0);
@@ -330,7 +331,7 @@ signal ID_REG5					  : std_logic_vector(31 downto 0);
 signal ID_REG6					  : std_logic_vector(31 downto 0);
 signal ID_REG7				  : std_logic_vector(31 downto 0);
 signal ID_REG8					  : std_logic_vector(31 downto 0);
-
+signal IDO_BranchPC : STD_LOGIC_VECTOR(31 downto 0);
 -- ID/EX
 signal BEO_EXI_ALU_Op        : STD_LOGIC_VECTOR(2 downto 0);
 signal BEO_EXI_ALU_Src       : STD_LOGIC;
@@ -391,7 +392,7 @@ IFF: Fetch Port MAP (
 
         In_stall_if     => IDO_IFI_STALL,
 
-        BEQ_PC          => IDO_BEI_Branch_Extend,
+        BEQ_PC          => IDO_BranchPC,
         PCSrc           => IDO_BEI_PCSrc,
 
 		  Jump            => IDO_IFI_Jump,
@@ -448,6 +449,7 @@ ID: Decoder Port MAP (
         --JUMP
         Jump                 => IDO_IFI_Jump,
         JumpPC               => IDO_IFI_Jump_Addr,
+		  BranchPC => IDO_BranchPC,
 
         EX_MEM_REG_RD        => BMO_MMI_Reg_WriteAddr,
         Branch_Sign_Extended => IDO_BEI_Branch_Extend,

@@ -9,7 +9,7 @@ entity HazardUnit is
       ID_EX_RegRt     : in std_logic_vector(4 downto 0);
       IF_ID_RegRs     : in std_logic_vector(4 downto 0);
       IF_ID_RegRt     : in std_logic_vector(4 downto 0);
-      
+      Jump            : in std_logic;
       STALL           : out std_logic
    );
 end HazardUnit;
@@ -19,8 +19,8 @@ architecture Behavioral of HazardUnit is
 begin
 
    -- Load-use Hazard
-   STALL <= '1' when ID_EX_MemRead = '1' and 
-                   ((ID_EX_RegRt = IF_ID_RegRs) or (ID_EX_RegRt = IF_ID_RegRt))
+   STALL <= '1' when (ID_EX_MemRead = '1' and 
+                   ((ID_EX_RegRt = IF_ID_RegRs) or (ID_EX_RegRt = IF_ID_RegRt)))
                 else '0';
 
 end Behavioral;

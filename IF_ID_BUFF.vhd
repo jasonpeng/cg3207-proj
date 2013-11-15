@@ -45,10 +45,12 @@ begin
 	 elsif rising_edge(CLK) then 
 	  if IF_ID_FLUSH = '1' then
 			INST_REG_OUT <= (others =>'0');
-	  elsif ID_STALL = '0' then
-			PC_ADDR_OUT <= PC_ADDR_IN; 
-		   INST_REG_OUT <= INST_REG_IN; 
-     end if;
+			PC_ADDR_OUT <= (others =>'0');
+	  else
+		PC_ADDR_OUT <= PC_ADDR_IN; 
+		INST_REG_OUT <= INST_REG_IN; 
+	  end if;
+
 	 end if;
  end process;
 
