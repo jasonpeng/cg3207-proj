@@ -41,7 +41,7 @@ begin
 																				-- case jump,jr,jarl,jal
 			
 		
-			ALUOp <= "100" when (InstrOp = "000000" and funct/= "000000")							
+			ALUOp <= "100" when (InstrOp = "000000" and Instr/= X"00000000")							
 -- case for R-format(ADD,SUB,DIV, DIVU, MUL and/or MULT, MULU, MFHI, MFLO,AND,NOR,OR,XOR,SLL,SLLV,SRL,SRLV,SRA,SRAV,SLT)																								
 				 else "001" when (InstrOp = "001000" or InstrOp = "100011" or InstrOp ="101011")	-- case for Addi,LW,SW
 				 else "010" when (InstrOp = "001010")								-- case for slti
