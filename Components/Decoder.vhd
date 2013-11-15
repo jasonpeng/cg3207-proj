@@ -32,12 +32,13 @@ entity Decoder is
            ALUSrc : OUT STD_LOGIC; 
            --JUMP 
 			  Jump : OUT STD_LOGIC; 
-           JumpPC : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 ); 
+           JumpPC : OUT STD_LOGIC_VECTOR( 31 DOWNTO 0 );
+			  BranchPC : OUT STD_LOGIC_VECTOR(31 downto 0);
 			  -- Branch Controls
 			  EX_MEM_REG_RD : in std_logic_vector(4 downto 0);
 			  Branch_Sign_Extended: out std_logic_vector(31 downto 0);
 			  PCSrc : OUT STD_LOGIC; 
-
+				
  			  read_data_1: out std_logic_vector (31 downto 0);
 			  read_data_2: out std_logic_vector (31 downto 0);
 -- Check Registers
@@ -96,7 +97,7 @@ architecture Behavioral_Decoder of Decoder is
       ID_EX_RegRt     : in std_logic_vector(4 downto 0);
       IF_ID_RegRs     : in std_logic_vector(4 downto 0);
       IF_ID_RegRt     : in std_logic_vector(4 downto 0);
-      
+      Jump            : in std_logic;
       STALL           : out std_logic
    );
    end component;
@@ -133,7 +134,7 @@ architecture Behavioral_Decoder of Decoder is
 	signal cmp_A: std_logic_vector(31 downto 0);
 	signal cmp_B: std_logic_vector(31 downto 0);
 	signal cmp_result: std_logic;
-	
+	signal Jump_buffer: std_logic;
 	signal RegAddr_1_buff : std_logic_vector(4 downto 0);
 	signal RegAddr_2_buff : std_logic_vector(4 downto 0);
 	signal RegData_1_buff : std_logic_vector(31 downto 0);
@@ -146,8 +147,9 @@ begin
 							else	X"FFFF" & imm_value; 
 
 	-- JumpPC = calculated address when JUMP is JAL or J	I type
-	Jump <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
+	Jump_buffer <= '1' when (Opcode = "000010" or Opcode = "000011" or (Opcode = "000000" and funct = "001000") or (Opcode ="000000" and funct = "001001"))-- case for jump
 				else '0';
+	Jump <= Jump_buffer;
 	--JumpPC <= register_array(to_integer(unsigned(reg_rs))) when (Opcode= "000000")
 	--	 else  In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
 	JumpPC <= In_PC(31 downto 28) & In_Instr (25 DOWNTO 0) & "00";
@@ -168,6 +170,18 @@ begin
 	Forward_d <= '1' when (Opcode ="000100" and (EX_MEM_REG_RD /= "00000")and (EX_MEM_REG_RD = reg_rt))
 					else '0';
 
+-- CMP_A and CMP_B IN BEQ CASE
+	RegAddr_1_buff <= EX_MEM_REG_RD when (Forward_c = '1')
+						else reg_rs;
+	RegAddr_2_buff <= EX_MEM_REG_RD when (Forward_d = '1')
+						else reg_rt;
+						
+	cmp_result <= '1' when ((Opcode= "000100" and (RegData_1_buff = RegData_2_buff))                -- case for BEQ
+							or (In_Instr(31 downto 26)="000001" and (RegData_1_buff(31) ='0'))) --case for BGEZ & BGEZAL
+					   else '0';
+	
+	PCSrc <= cmp_result and Branch;
+	BranchPC <= std_logic_vector(unsigned(In_PC) + (unsigned(SignExtended) sll 2));
 --	register_array(31) <= (In_PC + X"0000004") when ((cmp_result ='1' and Branch ='1' and (reg_rt = "10001"))
 --								or Opcode= "000011");	-- case JAL and BGEZAL, store PC+8 into register 31	
 	--	register_array(to_integer(unsigned(reg_rd)) <= (In_PC + 4) when (Opcode = "000000" and funct = "001001") 	-- case jalr
@@ -214,41 +228,9 @@ begin
       ID_EX_RegRt    => ID_EX_REG_RT,
       IF_ID_RegRs    => reg_rs,
       IF_ID_RegRt    => reg_rt,
-      
+      Jump           => Jump_buffer,
       STALL          => stall
    );
-
-RF_READ : process (Reset, In_Instr, Opcode, EX_MEM_REG_RD, reg_rs, reg_rt)
-begin
-	if (Reset='1') then
-		RegAddr_1_buff <= "00000";
-		RegAddr_2_buff <= "00000";
-		cmp_result <= '0';
-		PCSrc <= '0';
-	else
-		-- CMP_A and CMP_B IN BEQ CASE
-		if (Forward_c = '1') then
-			RegAddr_1_buff <= EX_MEM_REG_RD;
-		else 
-			RegAddr_1_buff <= reg_rs;
-		end if;
-		
-		if (Forward_d = '1') then
-			RegAddr_2_buff <= EX_MEM_REG_RD;
-		else
-			RegAddr_2_buff <= reg_rt;
-		end if;
-		
-		if ((Opcode= "000100" and (RegData_1_buff = RegData_2_buff))		-- case for BEQ
-				or (In_Instr(31 downto 26)="000001" and (RegData_1_buff(31) ='0')))  then --case for BGEZ & BGEZAL
-			cmp_result <= '1';
-		else
-			cmp_result <= '0';
-		end if;
-		
-		PCSrc <= cmp_result and Branch;
-	end if;
-end process;
 
 pipeline_control: process (Reset, Stall, RegWrite_out, MemToReg_out, MemRead_out, MemWrite_out,
 	RegDst_out, ALUOp_out, ALUSrc_out, reg_rs, reg_rt, reg_rd, SignExtended)
