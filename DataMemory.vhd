@@ -23,6 +23,7 @@ entity DataMemory is
 end DataMemory;
 
 architecture Behavioral of DataMemory is
+
 	type ram_type is array(0 to 7) of STD_LOGIC_VECTOR(31 downto 0);
 	
 	signal ram : ram_type := (	x"0a000000", 

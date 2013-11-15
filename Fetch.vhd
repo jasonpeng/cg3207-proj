@@ -102,6 +102,7 @@ port (
 end ram_instr;
 
 architecture syn of ram_instr is
+
     type rom_type is array (0 to 63) of std_logic_vector (31 downto 0);  
     
 	 -- currently, set 0-6 for test purpose
