@@ -23,24 +23,41 @@ entity DataMemory is
 end DataMemory;
 
 architecture Behavioral of DataMemory is
-	type ram_type is array(0 to 7) of STD_LOGIC_VECTOR(31 downto 0);
-	
-	signal ram : ram_type := (	x"0a000000", 
-										x"0b000000", 
-										x"0c000000", 
-										x"0d000000", 
-										x"0e000000",
-										x"00000000",
-										x"00000000",
-										x"00000000" );
-                              
-   signal address: integer;
+        type ram_type is array(0 to 31) of STD_LOGIC_VECTOR(7 downto 0);
+        
+        signal ram : ram_type := (
+                x"00", x"00", x"00", x"00", 
+                x"01", x"00", x"00", x"00", 
+                x"02", x"00", x"00", x"00", 
+                x"03", x"00", x"00", x"00", 
+                x"04", x"00", x"00", x"00",
+                x"05", x"00", x"00", x"00",
+                x"06", x"00", x"00", x"00",
+                x"07", x"00", x"00", x"00" );
 begin
 
-address <= to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 2)));
-
-OUT_MM_WB_Data <= ram(address) when IN_EX_MM_MemRead = '1' else (others => 'Z');
-
-ram(address) <= IN_EX_MM_Data2 when IN_EX_MM_MemWrite = '1';
+process(CLK)
+        variable address : integer;
+        variable data    : STD_LOGIC_VECTOR(31 downto 0);
+        variable rw      : STD_LOGIC_VECTOR(1 downto 0);
+begin
+        rw := IN_EX_MM_MemRead & IN_EX_MM_MemWrite;
+        address := to_integer(unsigned(IN_EX_MM_ALU_Result(4 downto 0)));
+        
+        case rw is
+                when "01" => -- write
+                        ram(address+3) <= IN_EX_MM_Data2(31 downto 24);
+                        ram(address+2) <= IN_EX_MM_Data2(23 downto 16);
+                        ram(address+1) <= IN_EX_MM_Data2(15 downto 8);
+                        ram(address)   <= IN_EX_MM_Data2(7 downto 0);
+                        data := (others => 'Z');
+                when "10" => -- read
+                        data := ram(address+3) & ram(address+2) & ram(address+1) & ram(address);
+                when others =>
+                        data := (others => 'Z');
+        end case;
+        
+        OUT_MM_WB_Data <= data;
+end process;
 
 end Behavioral;
