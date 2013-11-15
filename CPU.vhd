@@ -10,16 +10,6 @@ entity CPU is
         Result1  : OUT std_logic_vector(31 downto 0);
         Result2  : OUT std_logic_vector(31 downto 0);
         Debug    : OUT std_logic_vector(31 downto 0);
-        -- cpu
-        REG1     : out std_logic_vector(31 downto 0);
-        REG2     : out std_logic_vector(31 downto 0);
-        REG3     : out std_logic_vector(31 downto 0);
-        REG4     : out std_logic_vector(31 downto 0);
-        REG5     : out std_logic_vector(31 downto 0);
-        REG6     : out std_logic_vector(31 downto 0);
-        REG7     : out std_logic_vector(31 downto 0);
-        REG8     : out std_logic_vector(31 downto 0);
-        ALU_OP   : out std_logic_vector(2 downto 0);
         Clk, Reset : IN  std_logic
     );
 end CPU;
@@ -629,16 +619,8 @@ WB: WriteBack Port Map (
    );
 
 --
-result1 <= IFO_Instr;
-result2 <= IFO_PC_Addr;
-ALU_op  <= IDO_BEI_ALU_Op;
-REG1    <= ID_REG1;
-REG2    <= ID_REG2;
-REG3    <= ID_REG3;
-REG4    <= ID_REG4;
-REG5    <= ID_REG5;
-REG6    <= ID_REG6;
-REG7    <= ID_REG7;
-REG8    <= ID_REG8;
+result1 <= ID_REG1;
+result2 <= ID_REG2;
+debug   <= IFO_PC_Addr;
 
 end Behavioral;
