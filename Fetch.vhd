@@ -83,7 +83,7 @@ instr_mem: ram_instr port map (ADDR => read_addr, DATA => Instruction);
 			if(In_stall_if = '0') then	
 				PC <= nextPC;
 			else
-				 PC <= PC;
+				 PC <= PC - X"00000004";
 			end if;
       
 		end if;
