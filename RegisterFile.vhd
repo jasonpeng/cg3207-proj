@@ -37,6 +37,9 @@ architecture beh of RegisterFile is
       x"00000000",x"00000000",x"00000000",x"00000000",
       x"00000000",x"00000000",x"00000000",x"00000000"
    );
+	
+	signal index_1 : integer range 0 to 31;
+	signal index_2 : integer range 0 to 31;
 begin
 
 Reg_1 <= rf_array(1);
@@ -48,15 +51,22 @@ Reg_6 <= rf_array(6);
 Reg_7 <= rf_array(7);
 Reg_8 <= rf_array(8);
 
--- write data at rising_edge
-process(Clk,RESET, RegWrite, RegWriteAddr, RegWriteData)
+index_1 <= to_integer(unsigned(RegAddr_1));
+index_2 <= to_integer(unsigned(RegAddr_2));
+RegData_1 <= (others => 'Z') when (RESET='1') else
+	rf_array(index_1);
+RegData_2 <= (others => 'Z') when (RESET='1') else
+	rf_array(index_2);
+	
+-- write data at falling_edge
+process(CLK, RESET, RegWrite, RegWriteAddr, RegWriteData)
 	variable index_write : integer range 0 to 31;
 begin
 	if (RESET='1') then
 		for i in 0 to 31 loop
 			rf_array(i) <= (others => '0');
 		end loop;
-	elsif(Clk'event and Clk = '1') then
+	elsif(Clk'event and Clk = '0') then
 		index_write := to_integer(unsigned(RegWriteAddr));	
 		if (RegWrite='1' AND index_write /= 0) then
 			rf_array(index_write) <= RegWriteData;
@@ -64,19 +74,4 @@ begin
 	end if;
 end process;
 
--- read data at falling_edge
-process(RESET, RegAddr_1, RegAddr_2)
-	variable index_1 : integer range 0 to 31;
-	variable index_2 : integer range 0 to 31;
-begin
-	if (RESET='1') then
-		RegData_1 <= (others => 'Z');
-		RegData_2 <= (others => 'Z');
-	else
-		index_1 := to_integer(unsigned(RegAddr_1));
-		index_2 := to_integer(unsigned(RegAddr_2));
-		RegData_1 <= rf_array(index_1);
-		RegData_2 <= rf_array(index_2);
-	end if;
-end process;
 end beh;
